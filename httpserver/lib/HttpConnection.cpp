@@ -15,9 +15,7 @@ std::string HttpConnection::readData(size_t length)
     std::string line;
     line.resize(length);
     recvSize = recv(conn.socket, (char*)line.data(), (int)length, 0);
-
     if (recvSize != length) conn.alive = false;
-
     return line;
 }
 
@@ -26,14 +24,11 @@ std::string HttpConnection::readLine()
     char buf[1];
     int recvSize = 0;
     std::string line;
-
-    do
-    {
+    do {
         recvSize = recv(conn.socket, &buf[0], 1, 0);
         if (recvSize == 1) line.push_back(buf[0]);
         else conn.alive = false;
     } while (buf[0] != '\n' && recvSize == 1);
-
     line.push_back('\0');
     return line;
 }
@@ -107,10 +102,8 @@ void HttpConnection::parseMethod(std::string& line)
     int methodEnd = line.find(' ');
     std::string method = line.substr(0, methodEnd);
     size_t urlEnd = line.find(' ', methodEnd + 1);
-    if (urlEnd == std::string::npos)
-        urlEnd = line.find('\r');
+    if (urlEnd == std::string::npos) urlEnd = line.find('\r');
     std::string url = line.substr(methodEnd + 1, urlEnd - (methodEnd + 1));
-
     parameters["METHOD"] = method;
     parameters["METHODURL"] = url;
 }
@@ -129,11 +122,9 @@ void HttpConnection::recvHttpPacket()
     parameters.clear();
     rawHttpPacket = "";
     std::string line;
-
     line = readLine();
     rawHttpPacket += line;
     parseMethod(line);
-
     do {
         line = readLine();
         parseLine(line);
@@ -141,8 +132,7 @@ void HttpConnection::recvHttpPacket()
     } while (!line.empty() && line[0] != '\0' > 0 && line[0] != '\r');
 
     auto method = parameters.find("METHOD");
-    if (method != parameters.end() && method->second == "POST")
-    {
+    if (method != parameters.end() && method->second == "POST") {
         int contentLength = std::stoi(parameters.find("Content-Length")->second);
         line = decodeURIComponent(readData(contentLength));
         parameters["METHODPARAMS"] = line;
@@ -152,12 +142,8 @@ void HttpConnection::recvHttpPacket()
 
 string HttpConnection::readFileFromFolder(string fileName)
 {
-    string f = "";
-    f = readFile(System::htmlFilesFolder + fileName);
-    if (f.length() == 0)
-    {
-        f = readFile(System::dataFilesFolder + fileName);
-    }
+    string f = readFile(System::htmlFilesFolder + fileName);
+    if (f.length() == 0) f = readFile(System::dataFilesFolder + fileName);
     return f;
 }
 
@@ -172,10 +158,8 @@ std::string HttpConnection::trim(const std::string& s)
 std::string HttpConnection::escapeJson(const std::string& s)
 {
     std::string out;
-    for (char c : s)
-    {
-        switch (c)
-        {
+    for (char c : s) {
+        switch (c) {
         case '\"': out += "\\\""; break;
         case '\\': out += "\\\\"; break;
         case '\b': out += "\\b"; break;
@@ -193,16 +177,9 @@ std::string HttpConnection::runCommand(const std::string& cmd)
 {
     std::array<char, 256> buffer;
     std::string result;
-
     FILE* pipe = popen(cmd.c_str(), "r");
-    if (!pipe)
-        return "";
-
-    while (fgets(buffer.data(), (int)buffer.size(), pipe) != nullptr)
-    {
-        result += buffer.data();
-    }
-
+    if (!pipe) return "";
+    while (fgets(buffer.data(), (int)buffer.size(), pipe) != nullptr) result += buffer.data();
     pclose(pipe);
     return result;
 }
@@ -211,11 +188,7 @@ std::string HttpConnection::extractWavName(const std::string& text)
 {
     std::regex rgx(R"(/data/recordings/([^\s]+\.wav))");
     std::smatch match;
-
-    if (std::regex_search(text, match, rgx))
-    {
-        return match[1];
-    }
+    if (std::regex_search(text, match, rgx)) return match[1];
     return "";
 }
 
@@ -223,27 +196,19 @@ std::string HttpConnection::buildStatusJson()
 {
     std::string containerStatus = trim(runCommand("docker inspect -f '{{.State.Status}}' bird-recorder 2>/dev/null"));
     std::string topOutput = runCommand("docker top bird-recorder 2>/dev/null");
-
     std::string recordLine = "";
     std::string soxLine = "";
-
     std::istringstream iss(topOutput);
     std::string line;
-    while (std::getline(iss, line))
-    {
-        if (line.find("record.sh") != std::string::npos)
-            recordLine = trim(line);
-
-        if (line.find("sox") != std::string::npos)
-            soxLine = trim(line);
+    while (std::getline(iss, line)) {
+        if (line.find("record.sh") != std::string::npos) recordLine = trim(line);
+        if (line.find("sox") != std::string::npos) soxLine = trim(line);
     }
 
     bool containerRunning = (containerStatus == "running");
     bool recordRunning = !recordLine.empty();
     bool soxRunning = !soxLine.empty();
-
     std::string currentFile = extractWavName(soxLine);
-
     std::string json = "{";
     json += "\"container_status\":\"" + escapeJson(containerStatus) + "\",";
     json += "\"container_running\":" + std::string(containerRunning ? "true" : "false") + ",";
@@ -253,60 +218,40 @@ std::string HttpConnection::buildStatusJson()
     json += "\"sox_command\":\"" + escapeJson(soxLine) + "\",";
     json += "\"current_file\":\"" + escapeJson(currentFile) + "\"";
     json += "}";
-
     return json;
 }
 
 std::string HttpConnection::buildTemperatureJson()
 {
-    // Ejecutamos el comando para medir la temperatura
-    // Para esto usamos sys/class/thermal/thermal_zone0/temp un archivo especial del kernel de linux que expone la temperatura en miligrados
     std::string tempStr = trim(runCommand("cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null"));
-    
     int tempValue = 0;
-    if (!tempStr.empty())
-        // Transformamos la temperatura de miligrados a grados
-        tempValue = std::stoi(tempStr) / 1000;
-
+    if (!tempStr.empty()) tempValue = std::stoi(tempStr) / 1000;
     return "{\"cpu_temp\":" + std::to_string(tempValue) + "}";
 }
-
-
 
 void HttpConnection::parseHttpPacket()
 {
     std::cout << rawHttpPacket << "\n";
-
     auto methodNode = parameters.end();
     response.header = response.body = response.type = "";
 
-    if ((methodNode = parameters.find("METHOD")) != parameters.end())
-    {
+    if ((methodNode = parameters.find("METHOD")) != parameters.end()) {
         auto method = methodNode->second;
-
-        // Rutas tipo GET
-        if (method == "GET")
-        {
+        if (method == "GET") {
             auto fullUrl = parameters.find("METHODURL")->second;
-
-            // Separar URL del query string
             std::string url;
             std::string queryString;
             size_t qPos = fullUrl.find('?');
             if (qPos != std::string::npos) {
-                url         = fullUrl.substr(0, qPos);
+                url = fullUrl.substr(0, qPos);
                 queryString = fullUrl.substr(qPos + 1);
             } else {
-                url         = fullUrl;
+                url = fullUrl;
                 queryString = "";
             }
-            if (url.ends_with('/'))
-            {
-                url = "/";
-            }
+            if (url.ends_with('/')) url = "/";
 
-            if (url == "/status")
-            {
+            if (url == "/status") {
                 response.type = mimeTypes["json"];
                 response.body = buildStatusJson();
                 response.header = createHeader("200 OK", response.type, response.body.length());
@@ -314,41 +259,22 @@ void HttpConnection::parseHttpPacket()
                 return;
             }
 
-            if (url == "/")
-            {
-                response.type = mimeTypes["html"];
-                response.body = readFileFromFolder("/index.html");
-            }
-            else
-            {
-                response.body = readFileFromFolder(url);
-
-                size_t extensionPos = url.rfind('.');
-                if (extensionPos != std::string::npos) {
-                    auto mimeExtension = url.substr(extensionPos + 1);
-                    if (mimeTypes.find(mimeExtension) != mimeTypes.end())
-                        response.type = mimeTypes[mimeExtension];
-                    else
-                        response.type = "application/octet-stream";
-                }
-                else {
-                    response.type = "application/octet-stream";
-                }
-            }
-
-            if (response.body.empty())
-            {
-                response.header = createHeader("404 Not Found", response.type, response.body.length());
-                response.sendBody = false;
-            }
-            else
-            {
+            if (url == "/sensors/latest" || url == "/temperature") {
+                response.type = mimeTypes["json"];
+                response.body = buildLatestSensorJson(System::dataFilesFolder);
                 response.header = createHeader("200 OK", response.type, response.body.length());
                 response.sendBody = true;
+                return;
             }
-            
-            // archivos de configuración
-            // Crea lama a exec que le el config.txt
+
+            if (url == "/sensors/history" || url == "/temperature/history") {
+                response.type = mimeTypes["json"];
+                response.body = buildSensorHistoryJson(queryString, System::dataFilesFolder);
+                response.header = createHeader("200 OK", response.type, response.body.length());
+                response.sendBody = true;
+                return;
+            }
+
             if (url == "/config") {
                 response.type = mimeTypes["json"];
                 response.body = postMethods["/getConfig"]->exec("");
@@ -357,40 +283,37 @@ void HttpConnection::parseHttpPacket()
                 return;
             }
 
-            // para medir la temperatura del board en tiempo real (en desuso)
-            // if (url == "/temperature") {
-            //     response.type = mimeTypes["json"];
-            //     // leemos la temperatura del board
-            //     response.body = buildTemperatureJson();
-            //     response.header = createHeader("200 OK", response.type, response.body.length());
-            //     response.sendBody = true;
-            //     return;
-            // }
-
-            if (url == "/temperature/history") {
-                response.type     = mimeTypes["json"];
-                response.body     = buildTemperatureHistoryJson(queryString, System::dataFilesFolder);
-                response.header   = createHeader("200 OK", response.type, response.body.length());
-                response.sendBody = true;
-                return;
+            if (url == "/") {
+                response.type = mimeTypes["html"];
+                response.body = readFileFromFolder("/index.html");
+            } else {
+                response.body = readFileFromFolder(url);
+                size_t extensionPos = url.rfind('.');
+                if (extensionPos != std::string::npos) {
+                    auto mimeExtension = url.substr(extensionPos + 1);
+                    if (mimeTypes.find(mimeExtension) != mimeTypes.end()) response.type = mimeTypes[mimeExtension];
+                    else response.type = "application/octet-stream";
+                } else {
+                    response.type = "application/octet-stream";
+                }
             }
 
-        }
-        // Rutas tipo POST
-        else if (method == "POST")
-        {
+            if (response.body.empty()) {
+                response.header = createHeader("404 Not Found", response.type, response.body.length());
+                response.sendBody = false;
+            } else {
+                response.header = createHeader("200 OK", response.type, response.body.length());
+                response.sendBody = true;
+            }
+        } else if (method == "POST") {
             auto url = parameters.find("METHODURL")->second;
-
             PostMethod* method = postMethods[url];
-            if (method != nullptr)
-            {
+            if (method != nullptr) {
                 response.sendBody = true;
                 response.type = mimeTypes["html"];
                 response.body = method->exec(parameters["METHODPARAMS"]);
                 response.header = createHeader("200 OK", response.type, response.body.length());
-            }
-            else
-            {
+            } else {
                 response.sendBody = false;
                 response.type = mimeTypes["html"];
                 response.body = "";
@@ -400,21 +323,14 @@ void HttpConnection::parseHttpPacket()
     }
 }
 
-std::string HttpConnection::createHeader(
-    std::string responseCode,
-    std::string contentType,
-    size_t contentLength)
+std::string HttpConnection::createHeader(std::string responseCode, std::string contentType, size_t contentLength)
 {
     std::string httpHeader = "";
-
-    if (responseCode == "404 Not Found")
-    {
+    if (responseCode == "404 Not Found") {
         httpHeader += "HTTP/1.1 404 Not Found\r\n";
         httpHeader += "Connection: keep-alive\r\n";
         httpHeader += "Content-length: " + std::to_string(0) + "\r\n";
-    }
-    else
-    {
+    } else {
         httpHeader += "HTTP/1.1 " + responseCode + "\r\n";
         httpHeader += "Connection: keep-alive\r\n";
         httpHeader += "Keep-Alive: timeout = 5, max = 1000\r\n";
@@ -423,7 +339,6 @@ std::string HttpConnection::createHeader(
         httpHeader += "Accept-Ranges: bytes\r\n";
         httpHeader += "Access-Control-Allow-Origin: *\r\n";
     }
-
     httpHeader += "\r\n";
     return httpHeader;
 }
@@ -432,7 +347,6 @@ void HttpConnection::sendHttpPacket()
 {
     std::string httpPacket = response.header;
     if (response.sendBody) httpPacket += response.body;
-
     send(conn.socket, httpPacket.c_str(), (int)httpPacket.length(), MSG_NOSIGNAL);
 }
 

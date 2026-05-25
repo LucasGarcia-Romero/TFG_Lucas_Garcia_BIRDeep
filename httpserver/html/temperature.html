@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bird Recorder — Temperatura</title>
+<title>Bird Recorder — Sensores</title>
 <style>
 :root {
   --card: rgba(0,0,0,0.45);
@@ -31,7 +31,7 @@ body {
 }
 
 .wrapper {
-  max-width: 900px;
+  max-width: 980px;
   margin: auto;
   padding: 30px;
 }
@@ -40,7 +40,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 34px;
 }
 
 .brand { display: flex; align-items: center; gap: 15px; }
@@ -70,15 +70,36 @@ body {
 }
 .back-btn:hover { background: rgba(255,255,255,0.13); }
 
-/* Mode toggle */
-.mode-toggle {
-  display: flex;
-  gap: 8px;
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
   margin-bottom: 20px;
 }
 
-.mode-btn {
-  padding: 8px 20px;
+.control-card {
+  padding: 16px 20px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.control-label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.metric-toggle, .quick-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metric-btn, .range-btn, .apply-btn {
+  padding: 8px 18px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.2);
   background: rgba(255,255,255,0.07);
@@ -87,28 +108,44 @@ body {
   cursor: pointer;
   transition: all 0.2s;
 }
-.mode-btn.active {
+
+.metric-btn.active, .range-btn.active, .apply-btn {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
 }
-.mode-btn:hover:not(.active) { background: rgba(255,255,255,0.13); }
 
-/* Date range picker */
-.date-range {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  backdrop-filter: blur(8px);
+.metric-btn:hover:not(.active), .range-btn:hover:not(.active) { background: rgba(255,255,255,0.13); }
+.apply-btn:hover { background: var(--accent-dark); }
+
+.range-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
 }
 
-.date-range.hidden { display: none; }
+.slider-wrap input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.slider-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.exact-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+}
 
 .date-field {
   display: flex;
@@ -129,36 +166,10 @@ body {
   padding: 7px 12px;
   font-size: 13px;
   outline: none;
-  transition: border-color 0.2s;
   color-scheme: dark;
 }
-.date-field input[type="datetime-local"]:focus {
-  border-color: var(--accent);
-}
+.date-field input[type="datetime-local"]:focus { border-color: var(--accent); }
 
-.apply-btn {
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-  height: 34px;
-  align-self: flex-end;
-}
-.apply-btn:hover { background: var(--accent-dark); }
-
-.date-hint {
-  font-size: 12px;
-  color: var(--muted);
-  opacity: 0.7;
-  align-self: flex-end;
-  padding-bottom: 8px;
-}
-
-/* ── Card ── */
 .card {
   background: var(--card);
   border: 1px solid var(--card-border);
@@ -173,6 +184,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
   margin-bottom: 24px;
 }
 
@@ -181,6 +193,7 @@ body {
 .temp-big {
   display: flex;
   align-items: baseline;
+  justify-content: flex-end;
   gap: 6px;
 }
 
@@ -205,16 +218,15 @@ body {
 .refresh-hint {
   font-size: 12px;
   color: var(--muted);
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 .chart-container {
   position: relative;
-  height: 220px;
+  height: 280px;
   margin-top: 8px;
 }
 
-/* ── Stats ── */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -239,7 +251,6 @@ body {
   font-weight: bold;
 }
 
-/* ── Loading overlay ── */
 .loading-overlay {
   display: none;
   position: absolute;
@@ -254,10 +265,12 @@ body {
 .loading-overlay.visible { display: flex; }
 .chart-wrap { position: relative; }
 
-@media(max-width:600px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+@media(max-width:700px) {
+  .wrapper { padding: 20px; }
+  .topbar, .temp-header { align-items: flex-start; flex-direction: column; }
+  .stats-grid { grid-template-columns: 1fr; }
   .temp-value { font-size: 42px; }
-  .date-range { flex-direction: column; }
+  .range-grid, .exact-range { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -271,44 +284,68 @@ body {
         <img src="favicon.ico" alt="logo">
       </div>
       <div>
-        <h1>Temperatura</h1>
-        <p>Monitor de CPU — Orange Pi</p>
+        <h1>Sensores</h1>
+        <p>Histórico de temperatura interna, DHT22 y humedad</p>
       </div>
     </div>
     <a class="back-btn" href="/index.html">← Volver</a>
   </header>
 
-  <!-- Selector de modo -->
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="btn-realtime" onclick="setMode('realtime')">⬤ Tiempo real</button>
-    <button class="mode-btn" id="btn-history"  onclick="setMode('history')">📅 Histórico</button>
-  </div>
-
-  <!-- Selector de rango (solo visible en modo histórico) -->
-  <div class="date-range hidden" id="date-range">
-    <div class="date-field">
-      <label>Inicio</label>
-      <input type="datetime-local" id="date-from" />
+  <section class="controls">
+    <div class="control-card">
+      <span class="control-label">Variable a mostrar</span>
+      <div class="metric-toggle">
+        <button class="metric-btn active" data-metric="internal_temp" onclick="setMetric('internal_temp')">CPU / interna</button>
+        <button class="metric-btn" data-metric="external_temp" onclick="setMetric('external_temp')">DHT22 / externa</button>
+        <button class="metric-btn" data-metric="humidity" onclick="setMetric('humidity')">Humedad</button>
+      </div>
     </div>
-    <div class="date-field">
-      <label>Fin <span style="opacity:0.5">(vacío = ahora)</span></label>
-      <input type="datetime-local" id="date-to" />
-    </div>
-    <button class="apply-btn" onclick="loadHistory()">Aplicar</button>
-    <span class="date-hint" id="range-hint"></span>
-  </div>
 
-  <!-- Gráfica principal -->
+    <div class="control-card">
+      <span class="control-label">Rango temporal rápido</span>
+      <div class="range-grid">
+        <div class="slider-wrap">
+          <input id="hours-slider" type="range" min="1" max="168" step="1" value="1" oninput="previewSliderRange()" onchange="applySliderRange()">
+          <div class="slider-meta">
+            <span>Última 1 h</span>
+            <strong id="slider-label">Últimas 1 h</strong>
+            <span>Últimos 7 días</span>
+          </div>
+        </div>
+        <div class="quick-range">
+          <button class="range-btn active" id="btn-realtime" onclick="setRealtimeMode()">Tiempo real</button>
+          <button class="range-btn" data-hours="1" onclick="setQuickRange(1)">1 h</button>
+          <button class="range-btn" data-hours="6" onclick="setQuickRange(6)">6 h</button>
+          <button class="range-btn" data-hours="24" onclick="setQuickRange(24)">24 h</button>
+          <button class="range-btn" data-hours="72" onclick="setQuickRange(72)">3 días</button>
+          <button class="range-btn" data-hours="168" onclick="setQuickRange(168)">7 días</button>
+        </div>
+      </div>
+
+      <div class="exact-range">
+        <div class="date-field">
+          <label>Inicio exacto</label>
+          <input type="datetime-local" id="date-from" />
+        </div>
+        <div class="date-field">
+          <label>Fin exacto <span style="opacity:0.5">(vacío = ahora)</span></label>
+          <input type="datetime-local" id="date-to" />
+        </div>
+        <button class="apply-btn" onclick="loadHistoryFromInputs()">Aplicar rango exacto</button>
+      </div>
+    </div>
+  </section>
+
   <div class="card">
     <div class="temp-header">
       <div>
-        <h2 id="card-title">CPU Board</h2>
-        <div class="temp-status" id="temp-status">Leyendo…</div>
+        <h2 id="card-title">Temperatura interna</h2>
+        <div class="temp-status" id="sensor-status">Cargando histórico…</div>
       </div>
       <div style="text-align:right">
         <div class="temp-big">
-          <span class="temp-value" id="temp-value">--</span>
-          <span class="temp-unit">°C</span>
+          <span class="temp-value" id="sensor-value">--</span>
+          <span class="temp-unit" id="sensor-unit">°C</span>
         </div>
         <div class="refresh-hint" id="last-update">actualizando…</div>
       </div>
@@ -316,7 +353,7 @@ body {
 
     <div class="chart-wrap">
       <div class="chart-container">
-        <canvas id="tempChart"></canvas>
+        <canvas id="sensorChart"></canvas>
       </div>
       <div class="loading-overlay" id="loading">Cargando datos…</div>
     </div>
@@ -325,15 +362,15 @@ body {
   <div class="stats-grid">
     <div class="stat">
       <div class="label">Mínima</div>
-      <div class="value" id="stat-min">--°</div>
+      <div class="value" id="stat-min">--</div>
     </div>
     <div class="stat">
       <div class="label">Máxima</div>
-      <div class="value" id="stat-max">--°</div>
+      <div class="value" id="stat-max">--</div>
     </div>
     <div class="stat">
       <div class="label">Media</div>
-      <div class="value" id="stat-avg">--°</div>
+      <div class="value" id="stat-avg">--</div>
     </div>
   </div>
 
@@ -341,7 +378,6 @@ body {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// Auth
 (function() {
   var hasCookie = document.cookie.split(';').some(function(c) {
     return c.trim().startsWith('birdsession=');
@@ -349,239 +385,464 @@ body {
   if (!hasCookie) window.location.href = '/login.html';
 })();
 
-// Estado
-let mode = 'realtime';    // 'realtime' | 'history'
-let realtimeInterval = null;
+const METRICS = {
+  internal_temp: {
+    title: 'Temperatura interna',
+    label: 'CPU / interna',
+    unit: '°C',
+    normal: 'Temperatura interna normal',
+    warning: 'Temperatura interna elevada',
+    danger: 'Temperatura interna crítica',
+    yMin: 0,
+    yMax: 90
+  },
+  external_temp: {
+    title: 'Temperatura externa',
+    label: 'DHT22 / externa',
+    unit: '°C',
+    normal: 'Temperatura externa normal',
+    warning: 'Temperatura externa elevada',
+    danger: 'Temperatura externa alta',
+    yMin: 0,
+    yMax: 50
+  },
+  humidity: {
+    title: 'Humedad',
+    label: 'Humedad relativa',
+    unit: '%',
+    normal: 'Humedad normal',
+    warning: 'Humedad fuera del rango recomendado',
+    danger: 'Humedad crítica',
+    yMin: 0,
+    yMax: 100
+  }
+};
 
-const MAX_RT_POINTS = 40; // puntos máximos en tiempo real
-const labels   = [];
-const tempData = [];
+let currentMetric = 'internal_temp';
+let refreshInterval = null;
+let currentFrom = null;
+let currentTo = null;
+let currentMode = 'realtime'; // 'realtime' | 'quick' | 'exact'
+let realtimeEntries = [];
+let lastRealtimeTimestamp = null;
+const MAX_REALTIME_POINTS = 40;
 
-// Chart
-const ctx = document.getElementById('tempChart').getContext('2d');
+const labels = [];
+const values = [];
+
+const ctx = document.getElementById('sensorChart').getContext('2d');
 const chart = new Chart(ctx, {
   type: 'line',
   data: {
     labels,
     datasets: [{
-      label: 'CPU °C',
-      data: tempData,
+      label: METRICS[currentMetric].label,
+      data: values,
       borderColor: '#4CAF50',
       backgroundColor: 'rgba(76,175,80,0.1)',
       borderWidth: 2,
       pointRadius: 2,
       pointHoverRadius: 5,
       tension: 0.3,
-      fill: true
+      fill: false
     }]
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 400 },
+    animation: { duration: 300 },
     scales: {
       x: {
-        ticks: { color: '#b7d6b8', font: { size: 11 }, maxTicksLimit: 8 },
+        ticks: { color: '#b7d6b8', font: { size: 11 }, maxTicksLimit: 10 },
         grid:  { color: 'rgba(255,255,255,0.06)' }
       },
       y: {
-        min: 20, max: 90,
-        ticks: { color: '#b7d6b8', font: { size: 11 }, callback: v => v + '°C' },
+        min: METRICS[currentMetric].yMin,
+        max: METRICS[currentMetric].yMax,
+        ticks: {
+          color: '#b7d6b8',
+          font: { size: 11 },
+          callback: v => v + METRICS[currentMetric].unit
+        },
         grid: { color: 'rgba(255,255,255,0.06)' }
       }
     },
     plugins: {
       legend: { display: false },
-      tooltip: { callbacks: { label: c => c.parsed.y + ' °C' } }
+      tooltip: {
+        callbacks: {
+          label: c => c.parsed.y + ' ' + METRICS[currentMetric].unit
+        }
+      }
     }
   }
 });
 
-// Helpers
-function getTempColor(t) {
-  if (t < 50) return '#4CAF50';
-  if (t < 65) return '#ff9800';
-  return '#f44336';
+function pad(n) {
+  return String(n).padStart(2, '0');
 }
 
-function getTempLabel(t) {
-  if (t < 50) return 'Temperatura normal';
-  if (t < 65) return 'Temperatura elevada';
-  return 'Temperatura crítica';
+function formatLocalDateTime(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-function updateBigValue(t) {
-  const el = document.getElementById('temp-value');
-  el.textContent = t !== null ? t : '--';
-  el.style.color  = t !== null ? getTempColor(t) : '#b7d6b8';
-  document.getElementById('temp-status').textContent = t !== null ? getTempLabel(t) : '—';
+function toDatetimeLocal(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function updateStats(data) {
-  if (!data.length) return;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const avg = Math.round(data.reduce((a,b) => a+b, 0) / data.length);
-  document.getElementById('stat-min').textContent = min + '°';
-  document.getElementById('stat-max').textContent = max + '°';
-  document.getElementById('stat-avg').textContent = avg + '°';
-  chart.options.scales.y.min = Math.max(0,   min - 5);
-  chart.options.scales.y.max = Math.min(100, max + 5);
-}
-
-function setChartColor(t) {
-  const c = getTempColor(t);
-  chart.data.datasets[0].borderColor      = c;
-  chart.data.datasets[0].backgroundColor  = c.replace(')', ',0.1)').replace('rgb','rgba');
+function formatLabel(timestamp) {
+  if (!timestamp || timestamp.length < 19) return timestamp || '';
+  const day = timestamp.substring(5, 10);
+  const time = timestamp.substring(11, 16);
+  return `${day} ${time}`;
 }
 
 function setLoading(on) {
   document.getElementById('loading').classList.toggle('visible', on);
 }
 
-// Modo
-function setMode(m) {
-  mode = m;
-  document.getElementById('btn-realtime').classList.toggle('active', m === 'realtime');
-  document.getElementById('btn-history').classList.toggle('active',  m === 'history');
-  document.getElementById('date-range').classList.toggle('hidden',   m === 'realtime');
-
-  clearChart();
-
-  if (m === 'realtime') {
-    document.getElementById('card-title').textContent = 'CPU Board';
-    startRealtime();
-  } else {
-    stopRealtime();
-    document.getElementById('card-title').textContent = 'Histórico CPU';
-    document.getElementById('temp-status').textContent = 'Selecciona un rango y pulsa Aplicar';
-    document.getElementById('last-update').textContent = '';
-    updateBigValue(null);
-    // Rellenar fecha inicio con hace 24 h por defecto
-    const now = new Date();
-    const yesterday = new Date(now - 24 * 60 * 60 * 1000);
-    document.getElementById('date-from').value = toDatetimeLocal(yesterday);
-    document.getElementById('date-to').value   = '';
+function getColor(value) {
+  if (currentMetric === 'humidity') {
+    if (value >= 40 && value <= 70) return '#4CAF50';
+    if (value >= 30 && value <= 80) return '#ff9800';
+    return '#f44336';
   }
+  if (currentMetric === 'external_temp') {
+    if (value < 30) return '#4CAF50';
+    if (value < 38) return '#ff9800';
+    return '#f44336';
+  }
+  if (value < 50) return '#4CAF50';
+  if (value < 65) return '#ff9800';
+  return '#f44336';
+}
+
+function getStatusLabel(value) {
+  const cfg = METRICS[currentMetric];
+  if (value === null || Number.isNaN(value)) return 'Sin lectura disponible';
+  if (currentMetric === 'humidity') {
+    if (value >= 40 && value <= 70) return cfg.normal;
+    if (value >= 30 && value <= 80) return cfg.warning;
+    return cfg.danger;
+  }
+  if (currentMetric === 'external_temp') {
+    if (value < 30) return cfg.normal;
+    if (value < 38) return cfg.warning;
+    return cfg.danger;
+  }
+  if (value < 50) return cfg.normal;
+  if (value < 65) return cfg.warning;
+  return cfg.danger;
+}
+
+function updateHeader(lastValue, lastTimestamp) {
+  const cfg = METRICS[currentMetric];
+  const valueEl = document.getElementById('sensor-value');
+  const unitEl = document.getElementById('sensor-unit');
+
+  document.getElementById('card-title').textContent = cfg.title;
+  unitEl.textContent = cfg.unit;
+
+  if (lastValue === null || Number.isNaN(lastValue)) {
+    valueEl.textContent = '--';
+    valueEl.style.color = '#b7d6b8';
+    document.getElementById('sensor-status').textContent = 'Sin lectura disponible para esta variable';
+    document.getElementById('last-update').textContent = '';
+    return;
+  }
+
+  valueEl.textContent = Number(lastValue).toFixed(1);
+  valueEl.style.color = getColor(lastValue);
+  document.getElementById('sensor-status').textContent = getStatusLabel(lastValue);
+  document.getElementById('last-update').textContent = lastTimestamp ? 'última lectura ' + lastTimestamp : '';
+}
+
+function resetStats() {
+  document.getElementById('stat-min').textContent = '--';
+  document.getElementById('stat-max').textContent = '--';
+  document.getElementById('stat-avg').textContent = '--';
+}
+
+function updateStats(data) {
+  const cfg = METRICS[currentMetric];
+  if (!data.length) {
+    resetStats();
+    return;
+  }
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const avg = data.reduce((a,b) => a+b, 0) / data.length;
+
+  document.getElementById('stat-min').textContent = min.toFixed(1) + cfg.unit;
+  document.getElementById('stat-max').textContent = max.toFixed(1) + cfg.unit;
+  document.getElementById('stat-avg').textContent = avg.toFixed(1) + cfg.unit;
+
+  chart.options.scales.y.min = currentMetric === 'humidity' ? 0 : Math.max(0, Math.floor(min - 5));
+  chart.options.scales.y.max = currentMetric === 'humidity' ? 100 : Math.ceil(max + 5);
 }
 
 function clearChart() {
-  labels.length   = 0;
-  tempData.length = 0;
+  labels.length = 0;
+  values.length = 0;
+}
+
+function setChartAppearance(lastValue) {
+  const color = lastValue !== null && !Number.isNaN(lastValue) ? getColor(lastValue) : '#4CAF50';
+  chart.data.datasets[0].label = METRICS[currentMetric].label;
+  chart.data.datasets[0].borderColor = color;
+  chart.data.datasets[0].backgroundColor = color.replace(')', ',0.1)').replace('rgb','rgba');
+  chart.options.scales.y.ticks.callback = v => v + METRICS[currentMetric].unit;
+}
+
+function renderEntries(entries) {
+  clearChart();
+
+  const validEntries = [];
+  entries.forEach(function(e) {
+    const value = e[currentMetric];
+    if (value === null || value === undefined || Number.isNaN(Number(value))) return;
+    labels.push(formatLabel(e.timestamp));
+    values.push(Number(value));
+    validEntries.push({ timestamp: e.timestamp, value: Number(value) });
+  });
+
+  if (!validEntries.length) {
+    chart.update();
+    updateHeader(null, null);
+    resetStats();
+    document.getElementById('sensor-status').textContent = 'Sin datos en ese rango';
+    return;
+  }
+
+  const last = validEntries[validEntries.length - 1];
+  updateHeader(last.value, last.timestamp);
+  updateStats(values);
+  setChartAppearance(last.value);
   chart.update();
+
+  document.getElementById('sensor-status').textContent = `${validEntries.length} lecturas · ${METRICS[currentMetric].label}`;
 }
 
-// Tiempo real
-function startRealtime() {
-  fetchRealtime();
-  realtimeInterval = setInterval(fetchRealtime, 5000);
-}
+function loadHistory(fromDate, toDate, silent = false) {
+  currentFrom = fromDate;
+  currentTo = toDate;
 
-function stopRealtime() {
-  clearInterval(realtimeInterval);
-  realtimeInterval = null;
-}
+  const from = encodeURIComponent(formatLocalDateTime(fromDate));
+  const to = encodeURIComponent(formatLocalDateTime(toDate || new Date()));
+  const url = `/sensors/history?from=${from}&to=${to}`;
 
-function fetchRealtime() {
-  fetch('/temperature')
-    .then(r => r.json())
-    .then(function(data) {
-      const t = data.cpu_temp;
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('es-ES', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      });
-
-      updateBigValue(t);
-      document.getElementById('last-update').textContent = 'actualizado ' + timeStr;
-
-      labels.push(timeStr);
-      tempData.push(t);
-      if (labels.length > MAX_RT_POINTS) { labels.shift(); tempData.shift(); }
-
-      setChartColor(t);
-      chart.update();
-      updateStats(tempData);
-    })
-    .catch(function() {
-      document.getElementById('temp-status').textContent = 'Error de conexión';
-    });
-}
-
-// Histórico
-function toDatetimeLocal(date) {
-  // "YYYY-MM-DDTHH:MM" requerido por input datetime-local
-  const pad = n => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function loadHistory() {
-  const fromVal = document.getElementById('date-from').value;
-  const toVal   = document.getElementById('date-to').value;
-
-  if (!fromVal) {
-    document.getElementById('temp-status').textContent = 'Indica al menos una fecha de inicio';
-    return;
+  if (!silent) {
+    setLoading(true);
+    document.getElementById('sensor-status').textContent = 'Cargando histórico…';
   }
-
-  const fromDate = new Date(fromVal);
-  const toDate   = toVal ? new Date(toVal) : new Date();   // vacío = ahora
-
-  if (toDate <= fromDate) {
-    document.getElementById('temp-status').textContent = 'La fecha fin debe ser posterior al inicio';
-    return;
-  }
-
-  // Formato que espera el backend: "YYYY-MM-DD HH:MM:SS" (ISO simplificado)
-  const fmt = d => d.toISOString().replace('T',' ').substring(0,19);
-
-  const url = `/temperature/history?from=${encodeURIComponent(fmt(fromDate))}&to=${encodeURIComponent(fmt(toDate))}`;
-
-  setLoading(true);
-  document.getElementById('temp-status').textContent = 'Cargando…';
 
   fetch(url)
     .then(r => r.json())
     .then(function(data) {
       setLoading(false);
-
-      if (!data.entries || data.entries.length === 0) {
-        document.getElementById('temp-status').textContent = 'Sin datos en ese rango';
-        document.getElementById('last-update').textContent = '';
-        updateBigValue(null);
-        clearChart();
+      if (data.error) {
+        document.getElementById('sensor-status').textContent = data.error;
         return;
       }
-
-      clearChart();
-
-      data.entries.forEach(function(e) {
-        // e = { timestamp: "2025-07-10 14:32:05", temp: 42.3 }
-        labels.push(e.timestamp.substring(11, 19));   // solo HH:MM:SS
-        tempData.push(e.temp);
-      });
-
-      const lastTemp = tempData[tempData.length - 1];
-      updateBigValue(lastTemp);
-      setChartColor(lastTemp);
-
-      // Hint con rango real
-      const hint = `${data.entries.length} lecturas · ${data.entries[0].timestamp.substring(0,10)} → ${data.entries[data.entries.length-1].timestamp.substring(0,10)}`;
-      document.getElementById('temp-status').textContent = hint;
-      document.getElementById('last-update').textContent = '';
-      document.getElementById('range-hint').textContent  = `${data.entries.length} puntos`;
-
-      chart.update();
-      updateStats(tempData);
+      renderEntries(data.entries || []);
     })
     .catch(function() {
       setLoading(false);
-      document.getElementById('temp-status').textContent = 'Error al cargar histórico';
+      document.getElementById('sensor-status').textContent = 'Error al cargar histórico';
     });
 }
 
-// Arranque
-startRealtime();
+function updateSliderLabel() {
+  const hours = Number(document.getElementById('hours-slider').value);
+  const label = hours < 24 ? `Últimas ${hours} h` : `Últimos ${Math.round(hours / 24)} días`;
+  document.getElementById('slider-label').textContent = label;
+}
+
+function setDateInputs(fromDate, toDate) {
+  document.getElementById('date-from').value = toDatetimeLocal(fromDate);
+  document.getElementById('date-to').value = toDate ? toDatetimeLocal(toDate) : '';
+}
+
+function getRangeFromSlider() {
+  const hours = Number(document.getElementById('hours-slider').value);
+  const to = new Date();
+  const from = new Date(to.getTime() - hours * 60 * 60 * 1000);
+  return { from, to, hours };
+}
+
+function previewSliderRange() {
+  updateSliderLabel();
+  const range = getRangeFromSlider();
+  setDateInputs(range.from, null);
+}
+
+function setActiveRangeButton(hours) {
+  document.getElementById('btn-realtime').classList.remove('active');
+  document.querySelectorAll('.range-btn[data-hours]').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.hours) === hours);
+  });
+}
+
+function applySliderRange() {
+  currentMode = 'quick';
+  const range = getRangeFromSlider();
+  setActiveRangeButton(range.hours);
+  setDateInputs(range.from, null);
+  loadHistory(range.from, range.to);
+}
+
+function setQuickRange(hours) {
+  document.getElementById('hours-slider').value = hours;
+  updateSliderLabel();
+  applySliderRange();
+}
+
+function fetchRealtime(silent = false) {
+  currentMode = 'realtime';
+  if (!silent) {
+    setLoading(true);
+    document.getElementById('sensor-status').textContent = 'Leyendo tiempo real…';
+  }
+
+  fetch('/sensors/latest')
+    .then(r => r.json())
+    .then(function(data) {
+      setLoading(false);
+
+      if (data.error) {
+        document.getElementById('sensor-status').textContent = data.error;
+        return;
+      }
+
+      if (!data.timestamp) {
+        updateHeader(null, null);
+        resetStats();
+        document.getElementById('sensor-status').textContent = 'Sin lectura en tiempo real';
+        return;
+      }
+
+      if (data.timestamp !== lastRealtimeTimestamp) {
+        realtimeEntries.push(data);
+        lastRealtimeTimestamp = data.timestamp;
+        if (realtimeEntries.length > MAX_REALTIME_POINTS) realtimeEntries.shift();
+      }
+
+      setDateInputs(new Date(), null);
+      renderRealtimeEntries();
+    })
+    .catch(function() {
+      setLoading(false);
+      document.getElementById('sensor-status').textContent = 'Error al leer tiempo real';
+    });
+}
+
+function renderRealtimeEntries() {
+  clearChart();
+
+  const validEntries = [];
+  realtimeEntries.forEach(function(e) {
+    const value = e[currentMetric];
+    if (value === null || value === undefined || Number.isNaN(Number(value))) return;
+    labels.push(formatLabel(e.timestamp));
+    values.push(Number(value));
+    validEntries.push({ timestamp: e.timestamp, value: Number(value) });
+  });
+
+  if (!validEntries.length) {
+    chart.update();
+    updateHeader(null, null);
+    resetStats();
+    document.getElementById('sensor-status').textContent = 'Sin datos en tiempo real';
+    return;
+  }
+
+  const last = validEntries[validEntries.length - 1];
+  updateHeader(last.value, last.timestamp);
+  updateStats(values);
+  setChartAppearance(last.value);
+  chart.update();
+
+  document.getElementById('sensor-status').textContent = `${validEntries.length} lecturas · tiempo real`;
+}
+
+function setRealtimeMode() {
+  currentMode = 'realtime';
+  document.getElementById('btn-realtime').classList.add('active');
+  document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.remove('active'));
+  setDateInputs(new Date(), null);
+  realtimeEntries = [];
+  lastRealtimeTimestamp = null;
+  clearChart();
+  chart.update();
+  resetStats();
+  fetchRealtime();
+}
+
+function loadHistoryFromInputs() {
+  const fromVal = document.getElementById('date-from').value;
+  const toVal = document.getElementById('date-to').value;
+
+  if (!fromVal) {
+    document.getElementById('sensor-status').textContent = 'Indica al menos una fecha de inicio';
+    return;
+  }
+
+  const fromDate = new Date(fromVal);
+  const toDate = toVal ? new Date(toVal) : null;
+  const effectiveToDate = toDate || new Date();
+
+  if (effectiveToDate <= fromDate) {
+    document.getElementById('sensor-status').textContent = 'La fecha fin debe ser posterior al inicio';
+    return;
+  }
+
+  currentMode = 'exact';
+  document.getElementById('btn-realtime').classList.remove('active');
+  document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.remove('active'));
+  currentFrom = fromDate;
+  currentTo = toDate;
+  loadHistory(fromDate, effectiveToDate);
+}
+
+function setMetric(metric) {
+  currentMetric = metric;
+  document.querySelectorAll('.metric-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.metric === metric);
+  });
+
+  if (currentMode === 'realtime') {
+    renderRealtimeEntries();
+  } else if (currentFrom) {
+    loadHistory(currentFrom, currentTo || new Date());
+  }
+}
+
+function refreshCurrentRange() {
+  if (currentMode === 'realtime') {
+    fetchRealtime(true);
+    return;
+  }
+
+  if (!currentFrom) return;
+
+  if (currentMode === 'exact') {
+    loadHistory(currentFrom, currentTo || new Date(), true);
+    return;
+  }
+
+  const range = getRangeFromSlider();
+  setDateInputs(range.from, null);
+  loadHistory(range.from, range.to, true);
+}
+
+function startAutoRefresh() {
+  clearInterval(refreshInterval);
+  refreshInterval = setInterval(refreshCurrentRange, 60000);
+}
+
+updateSliderLabel();
+setRealtimeMode();
+startAutoRefresh();
 </script>
 
 </body>

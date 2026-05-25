@@ -30,10 +30,12 @@ services:
     privileged: true
     volumes:
       - /data:/data
+      - /etc/orangepi-release:/etc/orangepi-release:ro
     environment:
       - DATA_DIR=/data
-      - SLEEP_INTERVAL=10
-      - MAX_LINES=8640
+      - SLEEP_INTERVAL=60
+      - MAX_LINES=130000
+      - LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
 
   server:
     build:

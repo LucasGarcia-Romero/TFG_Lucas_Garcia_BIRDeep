@@ -15,12 +15,10 @@ WORKDIR /app
 COPY recorder/record.sh /app/record.sh
 COPY recorder/entrypoint.sh /app/entrypoint.sh
 
-# Binarios ARM64 precompilados
+# Binario de espectrograma
 COPY spectrogram/ /app/spectrogram/
-COPY DHT22/ /app/DHT22/
 
 RUN chmod +x /app/record.sh /app/entrypoint.sh \
- && chmod +x /app/spectrogram/spectrogram \
- && chmod +x /app/DHT22/dht22.out
+ && chmod +x /app/spectrogram/spectrogram
 
 ENTRYPOINT ["/app/entrypoint.sh"]

@@ -29,11 +29,6 @@ if [ -f "$CONFIG_FILE" ]; then
     done < "$CONFIG_FILE"
 fi
 
-# (opcionales si reactivas envíos)
-IPSERVER="${IPSERVER:-10.4.117.10}"
-USER="${USER:-utad}"
-SERVERDIR="${SERVERDIR:-/ruta/en/servidor}"
-
 # --- Rutas dentro del contenedor ---
 RECORDINGS_DIR="$DATA_DIR/recordings"
 BACKUP_DIR="$DATA_DIR/sdBackup"
@@ -41,7 +36,6 @@ STATS_FILE="$DATA_DIR/stats.txt"
 LOG_FILE="$DATA_DIR/${STATION}opi.log"
 
 SPECTROGRAM_BIN="/app/spectrogram/spectrogram"
-DHT22_BIN="/app/DHT22/dht22.out"
 
 mkdir -p "$RECORDINGS_DIR" "$BACKUP_DIR"
 touch "$STATS_FILE" "$LOG_FILE"
@@ -74,23 +68,15 @@ while true; do
     "$SPECTROGRAM_BIN" "$WAV_PATH" || true
   fi
 
-  # Temperatura placa
+  # Temperatura placa, solo para log de grabación
   BOARD_TEMP=""
   if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
     TEMP_RAW="$(cat /sys/class/thermal/thermal_zone0/temp)"
     BOARD_TEMP="$(awk '{printf("%d",$1/1000)}' <<<"${TEMP_RAW}")"
   fi
 
-  # DHT22
-  BOX_TEMP=""
-  BOX_HUMIDITY=""
-  if [ -x "$DHT22_BIN" ]; then
-    LINE="$("$DHT22_BIN" 2>/dev/null || true)"
-    read -r BOX_TEMP BOX_HUMIDITY _ <<<"$LINE" || true
-  fi
-
-  echo "$FILE_DATE BOARD_TEMP ${BOARD_TEMP}C BOX_TEMP ${BOX_TEMP}C BOX_HUMIDITY ${BOX_HUMIDITY}% ${STATION}${SAFE_FILE}.wav" >> "$LOG_FILE"
-  echo "$FILE_DATE BOARD_TEMP ${BOARD_TEMP}C BOX_TEMP ${BOX_TEMP}C BOX_HUMIDITY ${BOX_HUMIDITY}% ${STATION}${SAFE_FILE}.wav" >> "$STATS_FILE"
+  echo "$FILE_DATE BOARD_TEMP ${BOARD_TEMP}C FILE ${STATION}${SAFE_FILE}.wav" >> "$LOG_FILE"
+  echo "$FILE_DATE BOARD_TEMP ${BOARD_TEMP}C FILE ${STATION}${SAFE_FILE}.wav" >> "$STATS_FILE"
 
   # Si quieres mover a backup:
   # mv "$WAV_PATH"* "$BACKUP_DIR/$DIRECTORY/" || true
