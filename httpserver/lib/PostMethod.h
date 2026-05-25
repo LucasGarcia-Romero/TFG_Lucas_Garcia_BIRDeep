@@ -29,3 +29,7 @@ class ListFiles : public PostMethod { public: ListFiles() :PostMethod("/listFile
 class RecordData : public PostMethod { public: RecordData() :PostMethod("/recordData") { }; virtual string exec(string params) override; };
 class GetConfig : public PostMethod { public: GetConfig() :PostMethod("/getConfig") { }; virtual string exec(string params) override; };
 class SaveConfig : public PostMethod { public: SaveConfig() :PostMethod("/saveConfig") { }; virtual string exec(string params) override; };
+class MemoryStatus : public PostMethod { public: MemoryStatus() :PostMethod("/memoryStatus") { }; virtual string exec(string params) override; };
+class ClearStats : public PostMethod { public: ClearStats() :PostMethod("/clearStats") { }; virtual string exec(string params) override; };
+class ClearSpectrograms : public PostMethod { public: ClearSpectrograms() :PostMethod("/clearSpectrograms") { }; virtual string exec(string params) override; };
+class ClearAudios : public PostMethod { public: ClearAudios() :PostMethod("/clearAudios") { }; virtual string exec(string params) override; };

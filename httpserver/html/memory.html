@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bird Recorder — Memoria</title>
+<style>
+:root {
+  --card: rgba(0,0,0,0.45);
+  --card-border: rgba(255,255,255,0.15);
+  --text: #e8f5e9;
+  --muted: #b7d6b8;
+  --accent: #4CAF50;
+  --accent-dark: #2e7d32;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background:
+    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+    url("fondo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+.wrapper { max-width: 960px; margin: auto; padding: 30px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 34px; }
+.brand { display: flex; align-items: center; gap: 15px; }
+.brand-badge { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2); }
+.brand-badge img { width: 32px; height: 32px; object-fit: contain; }
+.brand h1 { margin: 0; font-size: 24px; }
+.brand p { margin: 3px 0 0; color: var(--muted); font-size: 14px; }
+.back-btn { padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); color: var(--muted); font-size: 14px; cursor: pointer; text-decoration: none; transition: background 0.2s; }
+.back-btn:hover { background: rgba(255,255,255,0.13); }
+.card { background: var(--card); border: 1px solid var(--card-border); backdrop-filter: blur(8px); border-radius: 20px; box-shadow: var(--shadow); padding: 28px; margin-bottom: 24px; }
+.card h2 { margin: 0 0 8px; font-size: 26px; }
+.subtitle { color: var(--muted); margin: 0 0 24px; line-height: 1.5; }
+.progress-wrap { margin: 20px 0 12px; }
+.progress-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.progress-label { color: var(--muted); font-size: 14px; }
+.progress-value { font-size: 28px; font-weight: bold; }
+.progress-bar { width: 100%; height: 18px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.12); }
+.progress-fill { width: 0%; height: 100%; background: var(--accent); transition: width 0.4s, background 0.4s; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 22px; }
+.stat { padding: 16px; border-radius: 14px; background: rgba(255,255,255,0.05); text-align: center; }
+.stat .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.stat .value { font-size: 20px; font-weight: bold; word-break: break-word; }
+.actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.action-card { padding: 22px; border-radius: 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); }
+.action-card h3 { margin: 0 0 8px; font-size: 20px; }
+.action-card p { margin: 0 0 18px; color: var(--muted); line-height: 1.5; font-size: 14px; }
+.btn { width: 100%; padding: 12px 16px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; background: var(--danger); transition: opacity 0.2s, transform 0.1s; }
+.btn:hover { opacity: 0.9; }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-secondary { background: var(--accent); width: auto; }
+.message { display: none; margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 14px; }
+.message.visible { display: block; }
+.message.ok { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.35); color: #a5d6a7; }
+.message.error { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.35); color: #ff8a80; }
+.small { margin-top: 12px; font-size: 12px; color: var(--muted); opacity: 0.8; }
+@media(max-width:860px) { .topbar { align-items: flex-start; flex-direction: column; } .stats-grid, .actions-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge"><img src="favicon.ico" alt="logo"></div>
+      <div>
+        <h1>Memoria</h1>
+        <p>Gestión del almacenamiento de la estación</p>
+      </div>
+    </div>
+    <a class="back-btn" href="/index.html">← Volver</a>
+  </header>
+
+  <section class="card">
+    <h2>Uso del almacenamiento</h2>
+    <p class="subtitle">Porcentaje usado de la unidad donde se almacenan los audios, espectrogramas y métricas.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">Memoria usada</span>
+        <span class="progress-value" id="used-percent">--%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat"><div class="label">Usado</div><div class="value" id="used-bytes">--</div></div>
+      <div class="stat"><div class="label">Disponible</div><div class="value" id="available-bytes">--</div></div>
+      <div class="stat"><div class="label">Audios WAV</div><div class="value" id="wav-count">--</div></div>
+      <div class="stat"><div class="label">Spectrogramas</div><div class="value" id="spectrogram-count">--</div></div>
+    </div>
+
+    <div class="small" id="last-update">Cargando datos…</div>
+    <button class="btn btn-secondary" style="margin-top:18px" onclick="loadMemoryStatus()">Actualizar</button>
+    <div class="message" id="status-message"></div>
+  </section>
+
+  <section class="card">
+    <h2>Limpieza de datos</h2>
+    <p class="subtitle">Estas acciones son destructivas. Antes de borrar audios o espectrogramas, asegúrate de haber hecho copia si los necesitas.</p>
+
+    <div class="actions-grid">
+      <div class="action-card">
+        <h3>CSV de métricas</h3>
+        <p>Vacía el histórico de sensores y deja la cabecera del CSV para que el monitor pueda seguir escribiendo sin romper la gráfica.</p>
+        <button class="btn" onclick="confirmAction('clearStats', '/clearStats', '¿Vaciar el CSV de métricas de stats?')">Vaciar métricas</button>
+      </div>
+
+      <div class="action-card">
+        <h3>Spectrogramas</h3>
+        <p>Elimina todos los archivos <strong>.png</strong> generados como espectrogramas dentro de la carpeta de grabaciones.</p>
+        <button class="btn" onclick="confirmAction('clearSpectrograms', '/clearSpectrograms', '¿Eliminar todos los spectrogramas PNG?')">Vaciar spectrogramas</button>
+      </div>
+
+      <div class="action-card">
+        <h3>Audios WAV</h3>
+        <p>Elimina todos los archivos <strong>.wav</strong> de audio dentro de la carpeta de grabaciones.</p>
+        <button class="btn" onclick="confirmAction('clearAudios', '/clearAudios', '¿Eliminar todos los audios WAV? Esta acción no se puede deshacer.')">Vaciar audios</button>
+      </div>
+    </div>
+
+    <div class="message" id="action-message"></div>
+  </section>
+</div>
+
+<script>
+(function() {
+  var hasCookie = document.cookie.split(';').some(function(c) { return c.trim().startsWith('birdsession='); });
+  if (!hasCookie) window.location.href = '/login.html';
+})();
+
+function formatBytes(bytes) {
+  const value = Number(bytes || 0);
+  if (value < 1024) return value + ' B';
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let size = value / 1024;
+  let index = 0;
+  while (size >= 1024 && index < units.length - 1) {
+    size /= 1024;
+    index++;
+  }
+  return size.toFixed(size >= 10 ? 1 : 2) + ' ' + units[index];
+}
+
+function showMessage(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'message visible ' + (ok ? 'ok' : 'error');
+}
+
+function setButtonsDisabled(disabled) {
+  document.querySelectorAll('button').forEach(btn => btn.disabled = disabled);
+}
+
+function updateMemoryUI(data) {
+  const percent = Number(data.used_percent || 0);
+  const safePercent = Math.max(0, Math.min(100, percent));
+  const fill = document.getElementById('progress-fill');
+
+  document.getElementById('used-percent').textContent = safePercent.toFixed(1) + '%';
+  fill.style.width = safePercent + '%';
+  fill.style.background = safePercent >= 90 ? 'var(--danger)' : (safePercent >= 75 ? 'var(--warn)' : 'var(--accent)');
+
+  document.getElementById('used-bytes').textContent = formatBytes(data.used);
+  document.getElementById('available-bytes').textContent = formatBytes(data.available);
+  document.getElementById('wav-count').textContent = `${data.wav_count || 0} (${formatBytes(data.wav_bytes)})`;
+  document.getElementById('spectrogram-count').textContent = `${data.spectrogram_count || 0} (${formatBytes(data.spectrogram_bytes)})`;
+  document.getElementById('last-update').textContent = 'Última actualización: ' + new Date().toLocaleString('es-ES');
+}
+
+function loadMemoryStatus() {
+  fetch('/memoryStatus', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'x=1'
+  })    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) {
+        showMessage('status-message', data.error || 'No se pudo leer la memoria.', false);
+        return;
+      }
+      updateMemoryUI(data);
+      document.getElementById('status-message').className = 'message';
+    })
+    .catch(() => showMessage('status-message', 'Error de conexión al consultar la memoria.', false));
+}
+
+function confirmAction(actionName, url, question) {
+  if (!window.confirm(question)) return;
+  setButtonsDisabled(true);
+  showMessage('action-message', 'Ejecutando limpieza…', true);
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'x=1'
+  })    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) {
+        showMessage('action-message', data.error || 'No se pudo completar la operación.', false);
+        return;
+      }
+      const removedText = data.removed !== undefined ? ` Archivos eliminados: ${data.removed}.` : '';
+      showMessage('action-message', 'Operación completada correctamente.' + removedText, true);
+      loadMemoryStatus();
+    })
+    .catch(() => showMessage('action-message', 'Error de conexión durante la limpieza.', false))
+    .finally(() => setButtonsDisabled(false));
+}
+
+loadMemoryStatus();
+setInterval(loadMemoryStatus, 30000);
+</script>
+</body>
+</html>

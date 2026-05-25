@@ -4,9 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bird Recorder</title>
-
 <style>
-
 :root {
   --card: rgba(0,0,0,0.45);
   --card-border: rgba(255,255,255,0.15);
@@ -16,369 +14,124 @@
   --accent-dark: #2e7d32;
   --shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
-
 * { box-sizing: border-box; }
-
 body{
   margin:0;
   font-family: Arial, Helvetica, sans-serif;
   color: var(--text);
-
   background:
-  linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
-  url("fondo.jpg");
-
+    linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
+    url("fondo.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-
   min-height:100vh;
 }
-
-.wrapper{
-  max-width:1100px;
-  margin:auto;
-  padding:30px;
-}
-
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:40px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:15px;
-}
-
-.brand-badge{
-  width:52px;
-  height:52px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:14px;
-  background:rgba(0,0,0,0.35);
-  border:1px solid rgba(255,255,255,0.2);
-}
-
-.brand-badge img{
-  width:32px;
-  height:32px;
-  object-fit:contain;
-}
-
-.brand h1{
-  margin:0;
-  font-size:28px;
-}
-
-.brand p{
-  margin:3px 0 0;
-  color:var(--muted);
-}
-
-.status-pill{
-  padding:8px 14px;
-  border-radius:999px;
-  background:rgba(76,175,80,0.2);
-  border:1px solid rgba(76,175,80,0.4);
-  font-size:14px;
-  transition: background 0.3s, border-color 0.3s, color 0.3s;
-}
-
-.status-pill.error {
-  background: rgba(229,57,53,0.2);
-  border-color: rgba(229,57,53,0.4);
-  color: #ff8a80;
-}
-
-.hero{
-  display:grid;
-  grid-template-columns:1.3fr 1fr;
-  gap:25px;
-  margin-bottom:35px;
-}
-
-.hero-card,
-.panel,
-.nav-card{
-  background:var(--card);
-  border:1px solid var(--card-border);
-  backdrop-filter: blur(8px);
-  border-radius:20px;
-  box-shadow:var(--shadow);
-}
-
-.hero-card{
-  padding:30px;
-}
-
-.hero-card h2{
-  margin:10px 0;
-  font-size:40px;
-}
-
-.hero-card p{
-  color:var(--muted);
-  line-height:1.6;
-}
-
-.hero-actions{
-  margin-top:25px;
-  display:flex;
-  gap:10px;
-}
-
-.btn{
-  padding:12px 18px;
-  border-radius:10px;
-  text-decoration:none;
-  font-weight:bold;
-}
-
-.btn-primary{
-  background:var(--accent);
-  color:white;
-}
-
-.btn-secondary{
-  background:rgba(255,255,255,0.08);
-  color:white;
-}
-
-.panel{
-  padding:20px;
-}
-
-.panel h3 {
-  margin: 0 0 15px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.panel h3 .refresh-hint {
-  font-size: 11px;
-  font-weight: normal;
-  color: var(--muted);
-  opacity: 0.7;
-}
-
-.mini-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.metric{
-  padding:15px;
-  border-radius:14px;
-  background:rgba(255,255,255,0.05);
-}
-
-.metric .label{
-  font-size:13px;
-  color:var(--muted);
-  margin-bottom:4px;
-}
-
-.metric .value{
-  font-size:22px;
-  font-weight:bold;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-/* Indicador de punto de color */
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
+.wrapper{ max-width:1100px; margin:auto; padding:30px; }
+.topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; gap:16px; }
+.brand{ display:flex; align-items:center; gap:15px; }
+.brand-badge{ width:52px; height:52px; display:flex; align-items:center; justify-content:center; border-radius:14px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.2); }
+.brand-badge img{ width:32px; height:32px; object-fit:contain; }
+.brand h1{ margin:0; font-size:28px; }
+.brand p{ margin:3px 0 0; color:var(--muted); }
+.status-pill{ padding:8px 14px; border-radius:999px; background:rgba(76,175,80,0.2); border:1px solid rgba(76,175,80,0.4); font-size:14px; transition: background 0.3s, border-color 0.3s, color 0.3s; }
+.status-pill.error { background: rgba(229,57,53,0.2); border-color: rgba(229,57,53,0.4); color: #ff8a80; }
+.logout-btn{ padding:8px 14px; border-radius:999px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.07); color:var(--muted); font-size:14px; cursor:pointer; transition:background 0.2s; }
+.logout-btn:hover{ background:rgba(255,255,255,0.13); }
+.hero{ display:grid; grid-template-columns:1.3fr 1fr; gap:25px; margin-bottom:35px; }
+.hero-card,.panel,.nav-card{ background:var(--card); border:1px solid var(--card-border); backdrop-filter: blur(8px); border-radius:20px; box-shadow:var(--shadow); }
+.hero-card{ padding:30px; }
+.hero-card h2{ margin:10px 0; font-size:40px; }
+.hero-card p{ color:var(--muted); line-height:1.6; }
+.hero-actions{ margin-top:25px; display:flex; gap:10px; flex-wrap:wrap; }
+.btn{ padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:bold; }
+.btn-primary{ background:var(--accent); color:white; }
+.btn-secondary{ background:rgba(255,255,255,0.08); color:white; }
+.panel{ padding:20px; }
+.panel h3 { margin: 0 0 15px; display: flex; align-items: center; justify-content: space-between; }
+.panel h3 .refresh-hint { font-size: 11px; font-weight: normal; color: var(--muted); opacity: 0.7; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .dot-ok    { background: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.7); }
 .dot-warn  { background: #ff9800; box-shadow: 0 0 8px rgba(255,152,0,0.7); }
 .dot-error { background: #f44336; box-shadow: 0 0 8px rgba(244,67,54,0.7); }
 .dot-gray  { background: #888; }
-
-/* Fila del archivo activo */
-.current-file-row {
-  margin-top: 14px;
-  padding: 12px 15px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.05);
-  font-size: 13px;
-  color: var(--muted);
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  word-break: break-all;
-}
-
-.current-file-row strong {
-  color: var(--text);
-  font-weight: normal;
-  flex: 1;
-}
-
-.section-title{
-  margin-bottom:15px;
-}
-
-.menu-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:25px;
-}
-
-.nav-card{
-  padding:28px;
-  text-decoration:none;
-  color:inherit;
-  transition:0.2s;
-}
-
-.nav-card:hover{
-  transform:translateY(-3px);
-}
-
-.nav-icon{
-  font-size:32px;
-  margin-bottom:10px;
-}
-
-.nav-card h3{
-  margin:0 0 8px;
-  font-size:26px;
-}
-
-.nav-card p{
-  color:var(--muted);
-}
-
-.nav-link{
-  font-weight:bold;
-}
-
-@media(max-width:900px){
-  .hero{ grid-template-columns:1fr; }
-  .menu-grid{ grid-template-columns:1fr 1fr; }
-}
-
+.current-file-row { margin-top: 14px; padding: 12px 15px; border-radius: 12px; background: rgba(255,255,255,0.05); font-size: 13px; color: var(--muted); min-height: 42px; display: flex; align-items: center; gap: 8px; word-break: break-all; }
+.current-file-row strong { color: var(--text); font-weight: normal; flex: 1; }
+.section-title{ margin-bottom:15px; }
+.menu-grid{ display:grid; grid-template-columns:1fr 1fr; gap:25px; }
+.nav-card{ padding:28px; text-decoration:none; color:inherit; transition:0.2s; }
+.nav-card:hover{ transform:translateY(-3px); }
+.nav-icon{ font-size:32px; margin-bottom:10px; }
+.nav-card h3{ margin:0 0 8px; font-size:26px; }
+.nav-card p{ color:var(--muted); line-height:1.5; }
+.nav-link{ font-weight:bold; }
+@media(max-width:900px){ .hero{ grid-template-columns:1fr; } .menu-grid{ grid-template-columns:1fr; } .topbar{ align-items:flex-start; flex-direction:column; } }
 </style>
 </head>
-
 <body>
-
 <div class="wrapper">
-
-<header class="topbar">
-  <div class="brand">
-    <div class="brand-badge">
-      <img src="favicon.ico" alt="logo">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge"><img src="favicon.ico" alt="logo"></div>
+      <div>
+        <h1>Bird Recorder</h1>
+        <p>Panel principal de la estación de grabación</p>
+      </div>
     </div>
-    <div>
-      <h1>Bird Recorder</h1>
-      <p>Panel principal de la estación de grabación</p>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="status-pill" id="system-pill">● Conectando…</div>
+      <button onclick="logout()" class="logout-btn">Cerrar sesión</button>
     </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <div class="status-pill" id="system-pill">● Conectando…</div>
-    <button onclick="logout()" style="
-      padding:8px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.2);
-      background:rgba(255,255,255,0.07);
-      color:var(--muted);
-      font-size:14px;
-      cursor:pointer;
-      transition:background 0.2s;
-    " onmouseover="this.style.background='rgba(255,255,255,0.13)'"
-       onmouseout="this.style.background='rgba(255,255,255,0.07)'">
-      Cerrar sesión
-    </button>
-  </div>
-</header>
+  </header>
 
-
-<section class="hero">
-
-  <div class="hero-card">
-    <h2>Centro de control</h2>
-    <p>
-      Accede rápidamente a las grabaciones generadas por la Orange Pi o revisa
-      el estado actual del sistema de grabación.
-    </p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="/recordings.html">Ver grabaciones</a>
-      <a class="btn btn-secondary" href="/status.html">Ver estado</a>
-    </div>
-  </div>
-
-
-  <aside class="panel">
-    <h3>
-      Resumen
-      <span class="refresh-hint" id="last-update">actualizando…</span>
-    </h3>
-
-    <div id="m-global" style="
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:18px 20px;
-      border-radius:14px;
-      background:rgba(255,255,255,0.05);
-      font-size:18px;
-      font-weight:bold;
-    ">
-      <span class="dot dot-gray" id="m-dot"></span>
-      <span id="m-label">Conectando…</span>
+  <section class="hero">
+    <div class="hero-card">
+      <h2>Centro de control</h2>
+      <p>Accede rápidamente a las grabaciones generadas por la Orange Pi, revisa el estado actual del sistema o gestiona el espacio ocupado por audios y espectrogramas.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/recordings.html">Ver grabaciones</a>
+        <a class="btn btn-secondary" href="/status.html">Ver estado</a>
+        <a class="btn btn-secondary" href="/memory.html">Gestionar memoria</a>
+      </div>
     </div>
 
-    <div class="current-file-row" id="m-file">
-      <span style="opacity:0.5">Sin archivo activo</span>
-    </div>
+    <aside class="panel">
+      <h3>Resumen <span class="refresh-hint" id="last-update">actualizando…</span></h3>
+      <div id="m-global" style="display:flex;align-items:center;gap:10px;padding:18px 20px;border-radius:14px;background:rgba(255,255,255,0.05);font-size:18px;font-weight:bold;">
+        <span class="dot dot-gray" id="m-dot"></span>
+        <span id="m-label">Conectando…</span>
+      </div>
+      <div class="current-file-row" id="m-file"><span style="opacity:0.5">Sin archivo activo</span></div>
+    </aside>
+  </section>
 
-  </aside>
+  <section class="menu-grid">
+    <a class="nav-card" href="/config.html">
+      <div class="nav-icon">⚙️</div>
+      <h3>Configuración</h3>
+      <p>Ajusta los parámetros de grabación de la estación.</p>
+      <span class="nav-link">Abrir ajustes →</span>
+    </a>
 
-</section>
+    <a class="nav-card" href="/temperature.html">
+      <div class="nav-icon">🌡️</div>
+      <h3>Estadísticas</h3>
+      <p>Monitoreo de temperatura CPU, externa y humedad.</p>
+      <span class="nav-link">Ver gráfica →</span>
+    </a>
 
-
-<section class="menu-grid">
-
-  <a class="nav-card" href="/config.html">
-    <div class="nav-icon">⚙️</div>
-    <h3>Configuración</h3>
-    <p>Ajusta los parámetros de grabación de la estación.</p>
-    <span class="nav-link">Abrir ajustes →</span>
-  </a>
-
-  <a class="nav-card" href="/temperature.html">
-    <div class="nav-icon">🌡️</div>
-    <h3>Estadísticas</h3>
-    <p>Monitoreo de temperatura CPU, externa y humedad</p>
-    <span class="nav-link">Ver gráfica →</span>
-  </a>
-
-</section>
-
+    <a class="nav-card" href="/memory.html">
+      <div class="nav-icon">💾</div>
+      <h3>Memoria</h3>
+      <p>Consulta el espacio usado en el almacenamiento de audios y elimina CSV de métricas, espectrogramas o audios WAV.</p>
+      <span class="nav-link">Gestionar memoria →</span>
+    </a>
+  </section>
 </div>
 
 <script>
-// Comprueba sesión antes de mostrar nada
 (function() {
-  var hasCookie = document.cookie.split(';').some(function(c) {
-    return c.trim().startsWith('birdsession=');
-  });
+  var hasCookie = document.cookie.split(';').some(function(c) { return c.trim().startsWith('birdsession='); });
   if (!hasCookie) window.location.href = '/login.html';
 })();
 
@@ -387,35 +140,35 @@ function logout() {
   window.location.href = '/login.html';
 }
 
-const pill    = document.getElementById('system-pill');
+const pill = document.getElementById('system-pill');
 const lastUpd = document.getElementById('last-update');
-const mDot    = document.getElementById('m-dot');
-const mLabel  = document.getElementById('m-label');
-const mFile   = document.getElementById('m-file');
+const mDot = document.getElementById('m-dot');
+const mLabel = document.getElementById('m-label');
+const mFile = document.getElementById('m-file');
 
 function updateStatus(data) {
   const allOk = data.container_running && data.record_running && data.sox_running;
   const anyOk = data.container_running || data.record_running;
 
   if (allOk) {
-    mDot.className   = 'dot dot-ok';
+    mDot.className = 'dot dot-ok';
     mLabel.textContent = 'Grabando';
     pill.textContent = '● Sistema operativo';
-    pill.className   = 'status-pill';
+    pill.className = 'status-pill';
     pill.style.cssText = '';
   } else if (anyOk) {
-    mDot.className   = 'dot dot-warn';
+    mDot.className = 'dot dot-warn';
     mLabel.textContent = 'Grabación detenida';
     pill.textContent = '● Grabación detenida';
-    pill.className   = 'status-pill';
-    pill.style.background   = 'rgba(255,152,0,0.2)';
-    pill.style.borderColor  = 'rgba(255,152,0,0.4)';
-    pill.style.color        = '#ffcc80';
+    pill.className = 'status-pill';
+    pill.style.background = 'rgba(255,152,0,0.2)';
+    pill.style.borderColor = 'rgba(255,152,0,0.4)';
+    pill.style.color = '#ffcc80';
   } else {
-    mDot.className   = 'dot dot-error';
+    mDot.className = 'dot dot-error';
     mLabel.textContent = 'Sistema inactivo';
     pill.textContent = '● Sistema inactivo';
-    pill.className   = 'status-pill error';
+    pill.className = 'status-pill error';
     pill.style.cssText = '';
   }
 
@@ -443,6 +196,5 @@ function fetchStatus() {
 fetchStatus();
 setInterval(fetchStatus, 5000);
 </script>
-
 </body>
 </html>

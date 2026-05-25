@@ -7,22 +7,24 @@
 
 int main(int argc, char** argv)
 {
-    // lee argumentos de arranque, en este caso no hay por el momento
+    // lee argumentos de arranque
     System::parseParams(argc, argv);
 
     // levanta un servidor Http + abrir socket
     HttpServer* s = new HttpServer(System::serverPort);
 
-    // Comienza a registrar los endpoint de PostMethod
+    // Endpoints POST
     s->registerPostMethod(new Login());
-
     s->registerPostMethod(new ListFiles());
-
     s->registerPostMethod(new RecordData());
-
-    // recoger archivos de configuración
     s->registerPostMethod(new GetConfig());
     s->registerPostMethod(new SaveConfig());
+
+    // Endpoints de memoria / limpieza
+    s->registerPostMethod(new MemoryStatus());
+    s->registerPostMethod(new ClearStats());
+    s->registerPostMethod(new ClearSpectrograms());
+    s->registerPostMethod(new ClearAudios());
 
     // Entra en el bucle infinito
     s->mainLoop();

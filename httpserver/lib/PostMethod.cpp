@@ -6,6 +6,8 @@
 #include <openssl/sha.h>
 #include <iomanip>
 #include <sstream>
+#include <filesystem>
+#include <system_error>
 
 // funcion para el hasheo de la contraseña por medio de sha256
 static std::string sha256(const std::string& input)
@@ -16,6 +18,52 @@ static std::string sha256(const std::string& input)
     for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
         oss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
     return oss.str();
+}
+
+static std::string escapeJson(const std::string& s)
+{
+    std::string out;
+    for (char c : s) {
+        switch (c) {
+        case '\"': out += "\\\""; break;
+        case '\\': out += "\\\\"; break;
+        case '\b': out += "\\b";  break;
+        case '\f': out += "\\f";  break;
+        case '\n': out += "\\n";  break;
+        case '\r': out += "\\r";  break;
+        case '\t': out += "\\t";  break;
+        default:   out += c;      break;
+        }
+    }
+    return out;
+}
+
+static bool hasExtension(const std::filesystem::path& path, const std::string& extension)
+{
+    return path.has_extension() && path.extension() == extension;
+}
+
+static uintmax_t removeFilesWithExtension(const std::filesystem::path& root, const std::string& extension)
+{
+    std::error_code ec;
+    if (!std::filesystem::exists(root, ec)) return 0;
+
+    uintmax_t removed = 0;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(root, std::filesystem::directory_options::skip_permission_denied, ec)) {
+        if (ec) break;
+        if (!entry.is_regular_file(ec)) continue;
+        if (!hasExtension(entry.path(), extension)) continue;
+
+        std::error_code removeEc;
+        if (std::filesystem::remove(entry.path(), removeEc)) removed++;
+    }
+    return removed;
+}
+
+static void writeSensorCsvHeader(const std::filesystem::path& filePath)
+{
+    std::ofstream file(filePath, std::ios::trunc);
+    file << "timestamp,internal_temp,external_temp,humidity\n";
 }
 
 string Login::exec(string params)
@@ -43,117 +91,92 @@ string Login::exec(string params)
 
 string ListWavFiles::exec(string params)
 {
-	return string();
+    return string();
 }
 
 //--- helper function convert timepoint to usable timestamp
 template <typename TP>
 time_t to_time_t(TP tp) {
-	using namespace std::chrono;
-	auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now() + system_clock::now());
-	return system_clock::to_time_t(sctp);
+    using namespace std::chrono;
+    auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now() + system_clock::now());
+    return system_clock::to_time_t(sctp);
 }
 
 string ListFiles::exec(string params)
 {
-	
-	std::string path = getPostParam(params, "directory");
-	replaceSubstrs(path, "/../", "/");//avoid relative paths
-	replaceSubstrs(path, "//", "/");//avoid relative paths
+    std::string path = getPostParam(params, "directory");
+    replaceSubstrs(path, "/../", "/"); // avoid relative paths
+    replaceSubstrs(path, "//", "/");  // avoid relative paths
 
-	int  parentIdx = (int)path.find_last_of("/", path.length()-2);
-	string parentPath = path;
-	if (parentIdx != string::npos)
-		parentPath = path.substr(0, parentIdx+1);
+    int parentIdx = (int)path.find_last_of("/", path.length() - 2);
+    string parentPath = path;
+    if (parentIdx != string::npos)
+        parentPath = path.substr(0, parentIdx + 1);
 
-	std::string realPath = System::dataFilesFolder+"/"+getPostParam(params, "directory");
-	
-	std::string directories = "{\"files\": [";
-	std::map<time_t, std::vector<std::filesystem::directory_entry>, std::greater<time_t>> sort_by_time;
-	int countFiles = 0;
-	for (const auto& entry : std::filesystem::directory_iterator(realPath))
-	{
-		auto time = to_time_t(entry.last_write_time());
-		sort_by_time[time].push_back(entry);
-	}
-	//add previous folder
-	directories += "\n{\n"
-		"\"parent\":\"" + parentPath + "\",\n"
-		"\"name\":\"\",\n"
-		"\"date\":\"\",\n"
-		"\"type\":\"PARENTDIR\"\n"
-		"}\n,";
+    std::string realPath = System::dataFilesFolder + "/" + path;
 
-	for (auto const& [time, entryList] : sort_by_time)
-	{
-		for (auto entry : entryList) {
-			std::string href;
-			std::string name = (char*)entry.path().filename().u8string().c_str();
-			string folderDate = std::string(asctime(std::localtime(&time)));
-			folderDate.pop_back();//scape last \n
-			if (entry.is_directory())
-			{
-				href = name + "/";
-				directories += "\n{\n"
-					"\"parent\":\""+ parentPath +"\",\n"
-					"\"name\":\"" +href + "\",\n"
-					"\"date\":\"" + folderDate + "\",\n"
-					"\"type\":\"DIR\"\n"
-					"}\n,";
+    std::string directories = "{\"files\": [";
+    std::map<time_t, std::vector<std::filesystem::directory_entry>, std::greater<time_t>> sort_by_time;
+    int countFiles = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(realPath))
+    {
+        auto time = to_time_t(entry.last_write_time());
+        sort_by_time[time].push_back(entry);
+    }
+    // add previous folder
+    directories += "\n{\n"
+        "\"parent\":\"" + parentPath + "\",\n"
+        "\"name\":\"\",\n"
+        "\"date\":\"\",\n"
+        "\"type\":\"PARENTDIR\"\n"
+        "}\n,";
 
-			}
-			if (entry.is_regular_file()) {
-				
-				href = name ;
-				directories += "\n{\n"
-					"\"parent\":\"" + parentPath + "\",\n"
-					"\"name\":\"" + href + "\",\n"
-					"\"date\":\"" + folderDate + "\",\n"
-					"\"type\":\"FILE\"\n"
-					"}\n,";
-			}
-			countFiles++;
-		}
-	}
-	directories.pop_back();
-
-	directories += "]}";
-
-	return directories;
+    for (auto const& [time, entryList] : sort_by_time)
+    {
+        for (auto entry : entryList) {
+            std::string href;
+            std::string name = (char*)entry.path().filename().u8string().c_str();
+            string folderDate = std::string(asctime(std::localtime(&time)));
+            folderDate.pop_back(); // scape last \n
+            if (entry.is_directory())
+            {
+                href = name + "/";
+                directories += "\n{\n"
+                    "\"parent\":\"" + parentPath + "\",\n"
+                    "\"name\":\"" + href + "\",\n"
+                    "\"date\":\"" + folderDate + "\",\n"
+                    "\"type\":\"DIR\"\n"
+                    "}\n,";
+            }
+            if (entry.is_regular_file()) {
+                href = name;
+                directories += "\n{\n"
+                    "\"parent\":\"" + parentPath + "\",\n"
+                    "\"name\":\"" + href + "\",\n"
+                    "\"date\":\"" + folderDate + "\",\n"
+                    "\"type\":\"FILE\"\n"
+                    "}\n,";
+            }
+            countFiles++;
+        }
+    }
+    directories.pop_back();
+    directories += "]}";
+    return directories;
 }
 
 string RecordData::exec(string params)
 {
-	json::JSON obj = json::JSON::Load(params);
-	std::ofstream outfile;
+    json::JSON obj = json::JSON::Load(params);
+    std::ofstream outfile;
 
-	outfile.open(obj["fileName"].ToString(), std::ios_base::app);
+    outfile.open(obj["fileName"].ToString(), std::ios_base::app);
 
-	for (auto& val : *(obj.Internal.Map))
-		outfile << val.second<<"\t";
-		//std::cout << val.first << " " <<val.second;
-	outfile << "\n";
-	outfile.close();
-	return "OK";
-}
-
-// implementación de la logica para get/post de los parametros de configuración
-static std::string escapeJson(const std::string& s)
-{
-    std::string out;
-    for (char c : s) {
-        switch (c) {
-        case '\"': out += "\\\""; break;
-        case '\\': out += "\\\\"; break;
-        case '\b': out += "\\b";  break;
-        case '\f': out += "\\f";  break;
-        case '\n': out += "\\n";  break;
-        case '\r': out += "\\r";  break;
-        case '\t': out += "\\t";  break;
-        default:   out += c;      break;
-        }
-    }
-    return out;
+    for (auto& val : *(obj.Internal.Map))
+        outfile << val.second << "\t";
+    outfile << "\n";
+    outfile.close();
+    return "OK";
 }
 
 string GetConfig::exec(string params)
@@ -218,4 +241,88 @@ string SaveConfig::exec(string params)
     }).detach();
 
     return "{\"ok\":true}";
+}
+
+string MemoryStatus::exec(string params)
+{
+    std::error_code ec;
+    auto info = std::filesystem::space(System::dataFilesFolder, ec);
+    if (ec) {
+        return "{\"ok\":false,\"error\":\"cannot read disk usage\"}";
+    }
+
+    uintmax_t used = info.capacity - info.available;
+    double usedPercent = info.capacity == 0 ? 0.0 : (double)used * 100.0 / (double)info.capacity;
+
+    uintmax_t wavCount = 0;
+    uintmax_t pngCount = 0;
+    uintmax_t wavBytes = 0;
+    uintmax_t pngBytes = 0;
+    std::filesystem::path recordings = std::filesystem::path(System::dataFilesFolder) / "recordings";
+
+    if (std::filesystem::exists(recordings, ec)) {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(recordings, std::filesystem::directory_options::skip_permission_denied, ec)) {
+            if (ec) break;
+            if (!entry.is_regular_file(ec)) continue;
+            uintmax_t size = entry.file_size(ec);
+            if (ec) size = 0;
+            if (hasExtension(entry.path(), ".wav")) {
+                wavCount++;
+                wavBytes += size;
+            } else if (hasExtension(entry.path(), ".png")) {
+                pngCount++;
+                pngBytes += size;
+            }
+        }
+    }
+
+    std::ostringstream json;
+    json << std::fixed << std::setprecision(2);
+    json << "{";
+    json << "\"ok\":true,";
+    json << "\"capacity\":" << info.capacity << ",";
+    json << "\"available\":" << info.available << ",";
+    json << "\"used\":" << used << ",";
+    json << "\"used_percent\":" << usedPercent << ",";
+    json << "\"wav_count\":" << wavCount << ",";
+    json << "\"wav_bytes\":" << wavBytes << ",";
+    json << "\"spectrogram_count\":" << pngCount << ",";
+    json << "\"spectrogram_bytes\":" << pngBytes;
+    json << "}";
+    return json.str();
+}
+
+string ClearStats::exec(string params)
+{
+    try {
+        std::filesystem::path sensorCsv = std::filesystem::path(System::dataFilesFolder) / "sensor_history.csv";
+        std::filesystem::path cpuTemp = std::filesystem::path(System::dataFilesFolder) / "cpu_temp.txt";
+        writeSensorCsvHeader(sensorCsv);
+        std::ofstream(cpuTemp, std::ios::trunc).close();
+        return "{\"ok\":true}";
+    } catch (...) {
+        return "{\"ok\":false,\"error\":\"cannot clear stats files\"}";
+    }
+}
+
+string ClearSpectrograms::exec(string params)
+{
+    try {
+        std::filesystem::path recordings = std::filesystem::path(System::dataFilesFolder) / "recordings";
+        uintmax_t removed = removeFilesWithExtension(recordings, ".png");
+        return "{\"ok\":true,\"removed\":" + std::to_string(removed) + "}";
+    } catch (...) {
+        return "{\"ok\":false,\"error\":\"cannot clear spectrograms\"}";
+    }
+}
+
+string ClearAudios::exec(string params)
+{
+    try {
+        std::filesystem::path recordings = std::filesystem::path(System::dataFilesFolder) / "recordings";
+        uintmax_t removed = removeFilesWithExtension(recordings, ".wav");
+        return "{\"ok\":true,\"removed\":" + std::to_string(removed) + "}";
+    } catch (...) {
+        return "{\"ok\":false,\"error\":\"cannot clear audios\"}";
+    }
 }
