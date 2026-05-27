@@ -20,6 +20,7 @@ services:
       - IDRECORDER=1
       - SLEEPDURATION=10
       - GPIO_PIN=117
+      - AUDIO_DEVICE=hw:2,0
 
   stats:
     build:

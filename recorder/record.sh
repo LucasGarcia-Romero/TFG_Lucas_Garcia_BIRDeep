@@ -11,6 +11,7 @@ DURATION="${DURATION:-60}"
 IDRECORDER="${IDRECORDER:-1}"
 SLEEPDURATION="${SLEEPDURATION:-10}"
 GPIO_PIN="${GPIO_PIN:-117}"
+AUDIO_DEVICE="${AUDIO_DEVICE:-hw:2,0}"
 
 # --- Cargar config externa si existe ---
 CONFIG_FILE="${DATA_DIR}/config.txt"
@@ -59,7 +60,8 @@ while true; do
   WAV_PATH="$RECORDINGS_DIR/${STATION}${SAFE_FILE}.wav"
 
   # Grabación
-  sox -t alsa hw:1 -r "$SAMPLE_RATE" -b "$BITRATE" -c 1 "$WAV_PATH" trim 0 "$DURATION" 2>/dev/null
+  # sox -t alsa hw:1 -r "$SAMPLE_RATE" -b "$BITRATE" -c 1 "$WAV_PATH" trim 0 "$DURATION" 2>/dev/null
+  sox -t alsa "$AUDIO_DEVICE" -r "$SAMPLE_RATE" -b "$BITRATE" -c 1 "$WAV_PATH" trim 0 "$DURATION"
 
   mkdir -p "$BACKUP_DIR/$DIRECTORY"
 
