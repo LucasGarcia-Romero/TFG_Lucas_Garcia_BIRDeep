@@ -26,7 +26,9 @@ read_dht22() {
   fi
 
   local output sensor_line
-  output="$($DHT22_BIN 2>/dev/null || true)"
+
+  # Nota tecnica: Permite que en caso de fallar el dth22 funcionen el resto de metricas 
+  output="$(timeout -k 2 5 "$DHT22_BIN" 2>/dev/null || true)"
 
   # El binario puede imprimir líneas de debug tipo "0x..." antes de la línea real.
   # Nos quedamos con la última línea cuyo primer y segundo campo sean numéricos.

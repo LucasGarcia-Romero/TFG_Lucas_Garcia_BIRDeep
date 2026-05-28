@@ -150,34 +150,16 @@ static void readSensorCsv(const std::string& path, std::vector<SensorEntry>& ent
     }
 }
 
-static void readLegacyText(const std::string& path, std::vector<SensorEntry>& entries) {
-    std::ifstream file(path);
-    if (!file.is_open()) return;
-
-    std::string line;
-    while (std::getline(file, line)) {
-        auto entry = parseLegacyTextLine(line);
-        if (entry) entries.push_back(*entry);
-    }
-}
-
 static std::vector<SensorEntry> loadEntries(const std::string& dataDir) {
     std::vector<SensorEntry> entries;
 
-    // Formato nuevo, generado constantemente por stats/temp_monitor.sh
+    // Formato único: generado por stats/temp_monitor.sh
     readSensorCsv(dataDir + "/sensor_history.csv", entries);
-
-    // Fallbacks para no perder históricos previos si todavía no existe el CSV nuevo.
-    if (entries.empty()) {
-        readLegacyText(dataDir + "/stats.txt", entries);
-    }
-    if (entries.empty()) {
-        readLegacyText(dataDir + "/cpu_temp.txt", entries);
-    }
 
     std::sort(entries.begin(), entries.end(), [](const SensorEntry& a, const SensorEntry& b) {
         return a.ts < b.ts;
     });
+
     return entries;
 }
 

@@ -436,10 +436,8 @@ string ClearStats::exec(string params)
 {
     try {
         std::filesystem::path sensorCsv = std::filesystem::path(System::dataFilesFolder) / "sensor_history.csv";
-        std::filesystem::path cpuTemp = std::filesystem::path(System::dataFilesFolder) / "cpu_temp.txt";
 
         writeSensorCsvHeader(sensorCsv);
-        std::ofstream(cpuTemp, std::ios::trunc).close();
         return "{\"ok\":true}";
     } catch (...) {
         return "{\"ok\":false,\"error\":\"cannot clear stats files\"}";
