@@ -5,30 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bird Recorder — Memoria</title>
 <style>
-:root {
-  --card: rgba(0,0,0,0.45);
-  --card-border: rgba(255,255,255,0.15);
-  --text: #e8f5e9;
-  --muted: #b7d6b8;
-  --accent: #4CAF50;
-  --accent-dark: #2e7d32;
-  --danger: #ef4444;
-  --warn: #f59e0b;
-  --shadow: 0 20px 50px rgba(0,0,0,0.5);
-}
+:root { --card: rgba(0,0,0,0.45); --card-border: rgba(255,255,255,0.15); --text: #e8f5e9; --muted: #b7d6b8; --accent: #4CAF50; --accent-dark: #2e7d32; --danger: #ef4444; --warn: #f59e0b; --shadow: 0 20px 50px rgba(0,0,0,0.5); }
 * { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  color: var(--text);
-  background:
-    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
-    url("fondo.jpg");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  min-height: 100vh;
-}
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--text); background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url("fondo.jpg"); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; }
 .wrapper { max-width: 960px; margin: auto; padding: 30px; }
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 34px; }
 .brand { display: flex; align-items: center; gap: 15px; }
@@ -65,7 +44,16 @@ body {
 .message.ok { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.35); color: #a5d6a7; }
 .message.error { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.35); color: #ff8a80; }
 .small { margin-top: 12px; font-size: 12px; color: var(--muted); opacity: 0.8; }
-@media(max-width:860px) { .topbar { align-items: flex-start; flex-direction: column; } .stats-grid, .actions-grid { grid-template-columns: 1fr; } }
+.auto-cleanup { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; padding: 16px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); }
+.auto-cleanup strong { display: block; margin-bottom: 4px; }
+.auto-cleanup span { display: block; color: var(--muted); font-size: 13px; line-height: 1.35; }
+.switch { position: relative; display: inline-block; width: 58px; height: 32px; flex: 0 0 auto; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.18); transition: .2s; border-radius: 999px; border: 1px solid rgba(255,255,255,0.20); }
+.slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 3px; bottom: 3px; background: white; transition: .2s; border-radius: 50%; }
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider:before { transform: translateX(26px); }
+@media(max-width:860px) { .topbar { align-items: flex-start; flex-direction: column; } .stats-grid, .actions-grid { grid-template-columns: 1fr; } .auto-cleanup { align-items: flex-start; flex-direction: column; } }
 </style>
 </head>
 <body>
@@ -73,10 +61,7 @@ body {
   <header class="topbar">
     <div class="brand">
       <div class="brand-badge"><img src="favicon.ico" alt="logo"></div>
-      <div>
-        <h1>Memoria</h1>
-        <p>Gestión del almacenamiento de la estación</p>
-      </div>
+      <div><h1>Memoria</h1><p>Gestión del almacenamiento de la estación</p></div>
     </div>
     <a class="back-btn" href="/index.html">← Volver</a>
   </header>
@@ -84,51 +69,51 @@ body {
   <section class="card">
     <h2>Uso del almacenamiento</h2>
     <p class="subtitle">Porcentaje usado de la unidad donde se almacenan los audios, espectrogramas y métricas.</p>
-
     <div class="progress-wrap">
-      <div class="progress-header">
-        <span class="progress-label">Memoria usada</span>
-        <span class="progress-value" id="used-percent">--%</span>
-      </div>
+      <div class="progress-header"><span class="progress-label">Memoria usada</span><span class="progress-value" id="used-percent">--%</span></div>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
-
     <div class="stats-grid">
       <div class="stat"><div class="label">Usado</div><div class="value" id="used-bytes">--</div></div>
       <div class="stat"><div class="label">Disponible</div><div class="value" id="available-bytes">--</div></div>
       <div class="stat"><div class="label">Audios WAV</div><div class="value" id="wav-count">--</div></div>
       <div class="stat"><div class="label">Spectrogramas</div><div class="value" id="spectrogram-count">--</div></div>
     </div>
-
     <div class="small" id="last-update">Cargando datos…</div>
     <button class="btn btn-secondary" style="margin-top:18px" onclick="loadMemoryStatus()">Actualizar</button>
+    <div class="auto-cleanup">
+      <div>
+        <strong>Vaciado automático al superar el 90%</strong>
+        <span>Si está activado, al consultar la memoria se elimina el 20% más antiguo de WAV, PNG y filas del CSV de forma equitativa.</span>
+      </div>
+      <label class="switch" title="Activar vaciado automático">
+        <input type="checkbox" id="auto-cleanup-toggle" onchange="saveAutoCleanup()">
+        <span class="slider"></span>
+      </label>
+    </div>
     <div class="message" id="status-message"></div>
   </section>
 
   <section class="card">
     <h2>Limpieza de datos</h2>
     <p class="subtitle">Estas acciones son destructivas. Antes de borrar audios o espectrogramas, asegúrate de haber hecho copia si los necesitas.</p>
-
     <div class="actions-grid">
       <div class="action-card">
         <h3>CSV de métricas</h3>
         <p>Vacía el histórico de sensores y deja la cabecera del CSV para que el monitor pueda seguir escribiendo sin romper la gráfica.</p>
         <button class="btn" onclick="confirmAction('clearStats', '/clearStats', '¿Vaciar el CSV de métricas de stats?')">Vaciar métricas</button>
       </div>
-
       <div class="action-card">
         <h3>Spectrogramas</h3>
         <p>Elimina todos los archivos <strong>.png</strong> generados como espectrogramas dentro de la carpeta de grabaciones.</p>
         <button class="btn" onclick="confirmAction('clearSpectrograms', '/clearSpectrograms', '¿Eliminar todos los spectrogramas PNG?')">Vaciar spectrogramas</button>
       </div>
-
       <div class="action-card">
         <h3>Audios WAV</h3>
         <p>Elimina todos los archivos <strong>.wav</strong> de audio dentro de la carpeta de grabaciones.</p>
         <button class="btn" onclick="confirmAction('clearAudios', '/clearAudios', '¿Eliminar todos los audios WAV? Esta acción no se puede deshacer.')">Vaciar audios</button>
       </div>
     </div>
-
     <div class="message" id="action-message"></div>
   </section>
 </div>
@@ -145,10 +130,7 @@ function formatBytes(bytes) {
   const units = ['KB', 'MB', 'GB', 'TB'];
   let size = value / 1024;
   let index = 0;
-  while (size >= 1024 && index < units.length - 1) {
-    size /= 1024;
-    index++;
-  }
+  while (size >= 1024 && index < units.length - 1) { size /= 1024; index++; }
   return size.toFixed(size >= 10 ? 1 : 2) + ' ' + units[index];
 }
 
@@ -160,56 +142,64 @@ function showMessage(id, text, ok) {
 
 function setButtonsDisabled(disabled) {
   document.querySelectorAll('button').forEach(btn => btn.disabled = disabled);
+  document.getElementById('auto-cleanup-toggle').disabled = disabled;
 }
 
 function updateMemoryUI(data) {
   const percent = Number(data.used_percent || 0);
   const safePercent = Math.max(0, Math.min(100, percent));
   const fill = document.getElementById('progress-fill');
-
   document.getElementById('used-percent').textContent = safePercent.toFixed(1) + '%';
   fill.style.width = safePercent + '%';
   fill.style.background = safePercent >= 90 ? 'var(--danger)' : (safePercent >= 75 ? 'var(--warn)' : 'var(--accent)');
-
   document.getElementById('used-bytes').textContent = formatBytes(data.used);
   document.getElementById('available-bytes').textContent = formatBytes(data.available);
   document.getElementById('wav-count').textContent = `${data.wav_count || 0} (${formatBytes(data.wav_bytes)})`;
   document.getElementById('spectrogram-count').textContent = `${data.spectrogram_count || 0} (${formatBytes(data.spectrogram_bytes)})`;
   document.getElementById('last-update').textContent = 'Última actualización: ' + new Date().toLocaleString('es-ES');
+  if (typeof data.auto_cleanup_enabled === 'boolean') document.getElementById('auto-cleanup-toggle').checked = data.auto_cleanup_enabled;
+  if (data.auto_cleanup_ran) {
+    showMessage('status-message', `Limpieza automática ejecutada. WAV eliminados: ${data.auto_cleanup_wav_removed || 0}. PNG eliminados: ${data.auto_cleanup_png_removed || 0}. Filas CSV eliminadas: ${data.auto_cleanup_csv_rows_removed || 0}.`, true);
+  }
 }
 
 function loadMemoryStatus() {
-  fetch('/memoryStatus', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'x=1'
-  })    .then(r => r.json())
+  fetch('/memoryStatus', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'x=1' })
+    .then(r => r.json())
     .then(data => {
-      if (!data.ok) {
-        showMessage('status-message', data.error || 'No se pudo leer la memoria.', false);
-        return;
-      }
+      if (!data.ok) { showMessage('status-message', data.error || 'No se pudo leer la memoria.', false); return; }
       updateMemoryUI(data);
-      document.getElementById('status-message').className = 'message';
+      if (!data.auto_cleanup_ran) document.getElementById('status-message').className = 'message';
     })
     .catch(() => showMessage('status-message', 'Error de conexión al consultar la memoria.', false));
+}
+
+function loadAutoCleanup() {
+  fetch('/getAutoCleanup', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'x=1' })
+    .then(r => r.json())
+    .then(data => { if (data.ok) document.getElementById('auto-cleanup-toggle').checked = !!data.enabled; })
+    .catch(() => showMessage('status-message', 'No se pudo cargar la configuración de limpieza automática.', false));
+}
+
+function saveAutoCleanup() {
+  const enabled = document.getElementById('auto-cleanup-toggle').checked ? '1' : '0';
+  fetch('/saveAutoCleanup', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'enabled=' + enabled })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) { showMessage('status-message', data.error || 'No se pudo guardar la limpieza automática.', false); return; }
+      showMessage('status-message', data.enabled ? 'Limpieza automática activada.' : 'Limpieza automática desactivada.', true);
+    })
+    .catch(() => showMessage('status-message', 'Error de conexión al guardar la limpieza automática.', false));
 }
 
 function confirmAction(actionName, url, question) {
   if (!window.confirm(question)) return;
   setButtonsDisabled(true);
   showMessage('action-message', 'Ejecutando limpieza…', true);
-
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'x=1'
-  })    .then(r => r.json())
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'x=1' })
+    .then(r => r.json())
     .then(data => {
-      if (!data.ok) {
-        showMessage('action-message', data.error || 'No se pudo completar la operación.', false);
-        return;
-      }
+      if (!data.ok) { showMessage('action-message', data.error || 'No se pudo completar la operación.', false); return; }
       const removedText = data.removed !== undefined ? ` Archivos eliminados: ${data.removed}.` : '';
       showMessage('action-message', 'Operación completada correctamente.' + removedText, true);
       loadMemoryStatus();
@@ -218,6 +208,7 @@ function confirmAction(actionName, url, question) {
     .finally(() => setButtonsDisabled(false));
 }
 
+loadAutoCleanup();
 loadMemoryStatus();
 setInterval(loadMemoryStatus, 30000);
 </script>

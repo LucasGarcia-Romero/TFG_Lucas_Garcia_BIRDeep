@@ -1,8 +1,7 @@
 #pragma once
 #include "common.h"
 
-class PostMethod
-{
+class PostMethod {
 public:
     string name;
     PostMethod() {};
@@ -17,7 +16,7 @@ public:
         }
         if (paramIdx == std::string::npos) return "";
         size_t valueStart = paramIdx + search.size();
-        size_t valueEnd   = paramList.find('&', valueStart);
+        size_t valueEnd = paramList.find('&', valueStart);
         if (valueEnd == std::string::npos) valueEnd = paramList.size();
         return paramList.substr(valueStart, valueEnd - valueStart);
     }
@@ -33,3 +32,5 @@ class MemoryStatus : public PostMethod { public: MemoryStatus() :PostMethod("/me
 class ClearStats : public PostMethod { public: ClearStats() :PostMethod("/clearStats") { }; virtual string exec(string params) override; };
 class ClearSpectrograms : public PostMethod { public: ClearSpectrograms() :PostMethod("/clearSpectrograms") { }; virtual string exec(string params) override; };
 class ClearAudios : public PostMethod { public: ClearAudios() :PostMethod("/clearAudios") { }; virtual string exec(string params) override; };
+class GetAutoCleanup : public PostMethod { public: GetAutoCleanup() :PostMethod("/getAutoCleanup") { }; virtual string exec(string params) override; };
+class SaveAutoCleanup : public PostMethod { public: SaveAutoCleanup() :PostMethod("/saveAutoCleanup") { }; virtual string exec(string params) override; };

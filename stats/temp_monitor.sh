@@ -6,7 +6,6 @@ SLEEP_INTERVAL="${SLEEP_INTERVAL:-10}"
 MAX_LINES="${MAX_LINES:-8640}"  # 24h si SLEEP_INTERVAL=10s
 
 SENSOR_FILE="${DATA_DIR}/sensor_history.csv"
-CPU_TEMP_FILE="${DATA_DIR}/cpu_temp.txt"       # compatibilidad con el histórico antiguo
 DHT22_BIN="${DHT22_BIN:-/app/DHT22/dht22.out}"
 
 mkdir -p "$DATA_DIR"
@@ -14,8 +13,6 @@ mkdir -p "$DATA_DIR"
 if [ ! -f "$SENSOR_FILE" ]; then
   echo "timestamp,internal_temp,external_temp,humidity" > "$SENSOR_FILE"
 fi
-
-touch "$CPU_TEMP_FILE"
 
 read_internal_temp() {
   if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
@@ -79,13 +76,7 @@ while true; do
 
   echo "${TIMESTAMP},${INTERNAL_TEMP},${EXTERNAL_TEMP},${HUMIDITY}" >> "$SENSOR_FILE"
 
-  # Archivo antiguo, por si alguna pantalla o script anterior todavía lo usa.
-  if [ -n "$INTERNAL_TEMP" ]; then
-    echo "${TIMESTAMP} BOARD_TEMP=${INTERNAL_TEMP}C" >> "$CPU_TEMP_FILE"
-  fi
-
   rotate_csv "$SENSOR_FILE"
-  rotate_plain "$CPU_TEMP_FILE"
 
   sleep "$SLEEP_INTERVAL"
 done

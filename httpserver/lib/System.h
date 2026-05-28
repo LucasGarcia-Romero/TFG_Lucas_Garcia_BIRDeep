@@ -4,7 +4,7 @@ class System
 {
 public:
     static inline string htmlFilesFolder = "html";
-    static inline string dataFilesFolder = "data";
+    static inline string dataFilesFolder = "/data";
     static inline int serverPort = 80;
     static inline void parseParams(int argc, char** argv)
     {
