@@ -20,7 +20,7 @@ services:
       - IDRECORDER=1
       - SLEEPDURATION=10
       - GPIO_PIN=117
-      - AUDIO_DEVICE=hw:2,0
+      - AUDIO_DEVICE=plughw:CARD=Microphone,DEV=0         # Hace referencia al audiomooth, mejor asi porque puede cambiar
       - WATCHDOG_MARGIN_SECONDS=600
       - WATCHDOG_MIN_VALID_WAV_RATIO_PERCENT=5
       - WATCHDOG_DISK_MAX_USED_PERCENT=95
