@@ -7,21 +7,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     ca-certificates \
     docker.io \
- && rm -rf /var/lib/apt/lists/*
+    wget \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Código del servidor
+# Codigo del servidor
 COPY httpserver/ /app/
-
-# servidor openSSL para el haseo y comprobacion de contraseña
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    g++ \
-    make \
-    ca-certificates \
-    docker.io \
-    libssl-dev \
- && rm -rf /var/lib/apt/lists/*
+COPY server/healthcheck.sh /app/healthcheck.sh
 
 # Compilar el binario
 RUN g++ -O2 -std=c++20 \
@@ -31,7 +25,8 @@ RUN g++ -O2 -std=c++20 \
     lib/PostMethod.cpp \
     lib/temperature_history.cpp \
     -o /usr/local/bin/mHttpServer \
-    -lssl -lcrypto
+    -lssl -lcrypto \
+    && chmod +x /app/healthcheck.sh
 
 EXPOSE 8000
 

@@ -20,10 +20,12 @@ services:
       - IDRECORDER=1
       - SLEEPDURATION=10
       - GPIO_PIN=117
-      - AUDIO_DEVICE=plughw:CARD=Microphone,DEV=0         # Hace referencia al audiomooth, mejor asi porque puede cambiar
+      - AUDIO_DEVICE=plughw:CARD=Microphone,DEV=0
+      # Hace referencia al audiomooth, mejor asi porque puede cambiar
       - WATCHDOG_MARGIN_SECONDS=600
       - WATCHDOG_MIN_VALID_WAV_RATIO_PERCENT=5
       - WATCHDOG_DISK_MAX_USED_PERCENT=95
+      - WATCHDOG_EMPTY_WAV_CONSECUTIVE_LIMIT=5
     healthcheck:
       test: ["CMD", "/app/healthcheck.sh"]
       interval: 60s
@@ -46,6 +48,13 @@ services:
       - SLEEP_INTERVAL=60
       - MAX_LINES=130000
       - LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
+      - STATS_MAX_AGE_SECONDS=300
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
 
   server:
     build:
@@ -58,6 +67,14 @@ services:
     volumes:
       - /data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVER_HEALTH_URL=http://localhost:8000/
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   recorder-watchdog:
     build:
@@ -67,23 +84,14 @@ services:
     restart: unless-stopped
     depends_on:
       - recorder
+      - stats
+      - server
     volumes:
-      - /data:/data:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - RECORDER_CONTAINER=bird-recorder
-      - DATA_DIR=/data
+      - WATCHDOG_CONTAINERS=bird-recorder,bird-stats,bird-http-server
       - CHECK_INTERVAL=60
-      - DURATION=60
-      - SLEEPDURATION=10
-      - WATCHDOG_MARGIN_SECONDS=600
-      - WATCHDOG_MIN_VALID_WAV_RATIO_PERCENT=5
-      - WATCHDOG_EMPTY_WAV_CONSECUTIVE_LIMIT=5
-      - WATCHDOG_DISK_MAX_USED_PERCENT=95
       - WATCHDOG_RESTART_COOLDOWN_SECONDS=300
-      - SAMPLE_RATE=32000
-      - BITRATE=16
-      - CHANNELS=1
 
 volumes:
   bird_data:
