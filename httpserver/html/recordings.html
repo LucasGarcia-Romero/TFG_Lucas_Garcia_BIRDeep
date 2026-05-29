@@ -1,240 +1,276 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico">
+    <title>Grabaciones</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --card: rgba(0,0,0,0.45);
+            --card-border: rgba(255,255,255,0.15);
+            --text:#e8f5e9;
+            --muted:#b7d6b8;
+            --accent:#4CAF50;
+            --accent-dark:#2e7d32;
+        }
 
-<link rel="icon" href="favicon.ico">
+        body {
+            margin:0;
+            font-family:Arial, Helvetica, sans-serif;
+            color:var(--text);
+            background: linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)), url("fondo.jpg");
+            background-size:cover;
+            background-position:center;
+            background-attachment:fixed;
+        }
 
-<title>Grabaciones</title>
+        .wrapper {
+            max-width:1000px;
+            margin:auto;
+            padding:30px;
+        }
 
-<style>
+        .topbar {
+            display:flex;
+            align-items:center;
+            gap:15px;
+            margin-bottom:30px;
+        }
 
-:root{
- --card: rgba(0,0,0,0.45);
- --card-border: rgba(255,255,255,0.15);
- --text:#e8f5e9;
- --muted:#b7d6b8;
- --accent:#4CAF50;
- --accent-dark:#2e7d32;
-}
+        .brand-badge {
+            width:52px;
+            height:52px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:14px;
+            background:rgba(0,0,0,0.35);
+            border:1px solid rgba(255,255,255,0.2);
+        }
 
-body{
- margin:0;
- font-family:Arial, Helvetica, sans-serif;
- color:var(--text);
+        .brand-badge img {
+            width:30px;
+        }
 
- background:
- linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
- url("fondo.jpg");
+        h1 {
+            margin:0;
+        }
 
- background-size:cover;
- background-position:center;
- background-attachment:fixed;
-}
+        .card {
+            background:var(--card);
+            border:1px solid var(--card-border);
+            border-radius:20px;
+            padding:25px;
+            backdrop-filter: blur(8px);
+        }
 
-.wrapper{
- max-width:1000px;
- margin:auto;
- padding:30px;
-}
+        .container {
+            display:flex;
+            align-items:center;
+            gap:20px;
+            padding:15px;
+            border-bottom:1px solid rgba(255,255,255,0.08);
+        }
 
-.topbar{
- display:flex;
- align-items:center;
- gap:15px;
- margin-bottom:30px;
-}
+        .container:hover {
+            background:rgba(255,255,255,0.05);
+        }
 
-.brand-badge{
- width:52px;
- height:52px;
- display:flex;
- align-items:center;
- justify-content:center;
- border-radius:14px;
- background:rgba(0,0,0,0.35);
- border:1px solid rgba(255,255,255,0.2);
-}
+        .container img {
+            width:70px;
+            height:70px;
+            cursor:pointer;
+        }
 
-.brand-badge img{
- width:30px;
-}
+        .text {
+            font-size:22px;
+        }
 
-h1{
- margin:0;
-}
+        .back {
+            display:inline-block;
+            margin-bottom:20px;
+            color:var(--text);
+            text-decoration:none;
+            font-weight:bold;
+        }
 
-.card{
- background:var(--card);
- border:1px solid var(--card-border);
- border-radius:20px;
- padding:25px;
- backdrop-filter: blur(8px);
-}
+        .filter-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
 
-.container{
- display:flex;
- align-items:center;
- gap:20px;
- padding:15px;
- border-bottom:1px solid rgba(255,255,255,0.08);
-}
+        .filter-row, .type-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
 
-.container:hover{
- background:rgba(255,255,255,0.05);
-}
+        .filter-buttons button {
+            background:var(--accent);
+            border:none;
+            color:white;
+            padding:10px 18px;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+        }
 
-.container img{
- width:70px;
- height:70px;
- cursor:pointer;
-}
+        .filter-buttons button:hover {
+            background:var(--accent-dark);
+        }
 
-.text{
- font-size:22px;
-}
+        .filter-field {
+            display:flex;
+            flex-direction:column;
+            gap:5px;
+            color:var(--muted);
+            font-size:14px;
+        }
 
-.back{
- display:inline-block;
- margin-bottom:20px;
- color:var(--text);
- text-decoration:none;
- font-weight:bold;
-}
+        .filter-field input {
+            background:rgba(0,0,0,0.35);
+            border:1px solid rgba(255,255,255,0.2);
+            color:var(--text);
+            padding:9px 10px;
+            border-radius:10px;
+            font-size:15px;
+        }
+    </style>
 
-.filter-buttons{
- display:flex;
- gap:15px;
- margin-bottom:20px;
-}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 
-.filter-buttons button{
- background:var(--accent);
- border:none;
- color:white;
- padding:10px 18px;
- border-radius:10px;
- font-size:16px;
- cursor:pointer;
-}
+    <script>
+        let currentFilter = "wav";
 
-.filter-buttons button:hover{
- background:var(--accent-dark);
-}
+        function setFilter(type) {
+            currentFilter = type;
+            listFiles("recordings/");
+        }
 
-</style>
+        function getFilterParams() {
+            return {
+                name: document.getElementById("nameFilter").value.trim(),
+                from: document.getElementById("fromFilter").value,
+                to: document.getElementById("toFilter").value
+            };
+        }
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+        function clearFilters() {
+            document.getElementById("nameFilter").value = "";
+            document.getElementById("fromFilter").value = "";
+            document.getElementById("toFilter").value = "";
 
-<script>
+            listFiles("recordings/");
+        }
 
-let currentFilter="wav";
+        function listFiles(dirPath) {
+            var filters = getFilterParams();
 
-function setFilter(type){
- currentFilter=type;
- listFiles("recordings/");
-}
+            $.post(
+                "/listFiles",
+                {
+                    directory: dirPath,
+                    extension: currentFilter,
+                    name: filters.name,
+                    from: filters.from,
+                    to: filters.to
+                },
+                function(data) {
+                    var json = JSON.parse(data);
+                    var div0 = document.getElementById("directoryList");
 
-function listFiles(dirPath)
-{
+                    while (div0.firstChild) {
+                        div0.removeChild(div0.lastChild);
+                    }
 
- $.post(
- "/listFiles",
+                    for (let i in json.files) {
+                        var file = json.files[i];
 
- {directory: dirPath,secondParam:"second"},
+                        if (file.type == "FILE") {
+                            let name = file.name;
+                            var div1 = document.createElement("div");
 
- function(data)
- {
+                            div1.setAttribute("class", "container");
 
- var json=JSON.parse(data);
+                            var img = document.createElement("img");
 
- var div0=document.getElementById("directoryList");
+                            if (name.endsWith(".wav")) {
+                                img.src = "audio.png";
+                            } else {
+                                img.src = "spectrogram.png";
+                            }
 
- while(div0.firstChild){
- div0.removeChild(div0.lastChild);
- }
+                            img.onclick = function() {
+                                window.open(file.parent + name);
+                            };
 
- for(let i in json.files){
+                            var text = document.createElement("span");
 
- var file=json.files[i];
+                            text.setAttribute("class", "text");
+                            text.innerText = name;
 
- if(file.type=="FILE"){
+                            div1.appendChild(img);
+                            div1.appendChild(text);
+                            div0.appendChild(div1);
+                        }
+                    }
+                }
+            );
+        }
 
- let name=file.name;
-
- if(currentFilter=="wav" && !name.endsWith(".wav")) continue;
- if(currentFilter=="png" && !name.endsWith(".png")) continue;
-
- var div1=document.createElement("div");
- div1.setAttribute("class","container");
-
- var img=document.createElement("img");
-
- if(name.endsWith(".wav")){
- img.src="audio.png";
- }else{
- img.src="spectrogram.png";
- }
-
- img.onclick=function(){
- window.open(file.parent+name);
- };
-
- var text=document.createElement("span");
- text.setAttribute("class","text");
- text.innerText=name;
-
- div1.appendChild(img);
- div1.appendChild(text);
- div0.appendChild(div1);
-
- }
-
- }
-
- });
-
-}
-
-$(document).ready(function(){
- listFiles("recordings/");
-});
-
-</script>
-
+        $(document).ready(function() {
+            listFiles("recordings/");
+        });
+    </script>
 </head>
 
 <body>
+    <div class="wrapper">
+        <div class="topbar">
+            <div class="brand-badge">
+                <img src="favicon.ico">
+            </div>
 
-<div class="wrapper">
+            <h1>Grabaciones</h1>
+        </div>
 
-<div class="topbar">
+        <a class="back" href="index.html">← Volver al menú</a>
 
-<div class="brand-badge">
-<img src="favicon.ico">
-</div>
+        <div class="filter-buttons">
+            <div class="filter-row">
+                <div class="filter-field">
+                    <label for="nameFilter">Nombre contiene</label>
+                    <input id="nameFilter" type="text" placeholder="PRUEBAS_LUKAS">
+                </div>
 
-<h1>Grabaciones</h1>
+                <div class="filter-field">
+                    <label for="fromFilter">Desde</label>
+                    <input id="fromFilter" type="datetime-local">
+                </div>
 
-</div>
+                <div class="filter-field">
+                    <label for="toFilter">Hasta</label>
+                    <input id="toFilter" type="datetime-local">
+                </div>
 
-<a class="back" href="index.html">← Volver al menú</a>
+                <button onclick="listFiles('recordings/')">Filtrar</button>
+                <button onclick="clearFilters()">Limpiar</button>
+            </div>
 
-<div class="filter-buttons">
-<button onclick="setFilter('wav')">Audio</button>
-<button onclick="setFilter('png')">Spectrograma</button>
-</div>
+            <div class="type-row">
+                <button onclick="setFilter('wav')">Audio</button>
+                <button onclick="setFilter('png')">Spectrograma</button>
+            </div>
+        </div>
 
-<div class="card">
-
-<div id="directoryList"></div>
-
-</div>
-
-</div>
-
+        <div class="card">
+            <div id="directoryList"></div>
+        </div>
+    </div>
 </body>
 </html>

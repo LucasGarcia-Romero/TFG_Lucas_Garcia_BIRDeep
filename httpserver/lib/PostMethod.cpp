@@ -4,57 +4,137 @@
 #include "Json.hpp"
 
 #include <openssl/sha.h>
+
 #include <algorithm>
+#include <cctype>
+#include <chrono>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <string>
 #include <system_error>
 #include <thread>
 #include <vector>
+
+using namespace std;
 
 static const double AUTO_CLEANUP_THRESHOLD_PERCENT = 90.0;
 static const double AUTO_CLEANUP_DELETE_PERCENT = 0.20;
 static const char* AUTO_CLEANUP_FILE = "auto_cleanup.txt";
 
 // funcion para el hasheo de la contrasena por medio de sha256
-static std::string sha256(const std::string& input)
-{
+static std::string sha256(const std::string& input) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(reinterpret_cast<const unsigned char*>(input.c_str()), input.size(), hash);
+
     std::ostringstream oss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
         oss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    }
     return oss.str();
 }
 
-static std::string escapeJson(const std::string& s)
-{
+static std::string escapeJson(const std::string& s) {
     std::string out;
     for (char c : s) {
         switch (c) {
-        case '"': out += "\\\""; break;
-        case '\\': out += "\\\\"; break;
-        case '\b': out += "\\b"; break;
-        case '\f': out += "\\f"; break;
-        case '\n': out += "\\n"; break;
-        case '\r': out += "\\r"; break;
-        case '\t': out += "\\t"; break;
-        default: out += c; break;
+            case '"': out += "\\\""; break;
+            case '\\': out += "\\\\"; break;
+            case '\b': out += "\\b"; break;
+            case '\f': out += "\\f"; break;
+            case '\n': out += "\\n"; break;
+            case '\r': out += "\\r"; break;
+            case '\t': out += "\\t"; break;
+            default: out += c; break;
         }
     }
     return out;
 }
 
-static bool hasExtension(const std::filesystem::path& path, const std::string& extension)
-{
+static bool hasExtension(const std::filesystem::path& path, const std::string& extension) {
     return path.has_extension() && path.extension() == extension;
 }
 
-static uintmax_t removeFilesWithExtension(const std::filesystem::path& root, const std::string& extension)
-{
+static std::string toLower(std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return value;
+}
+
+static bool endsWith(const std::string& value, const std::string& suffix) {
+    if (suffix.empty()) return true;
+    if (value.size() < suffix.size()) return false;
+    return value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+static std::string normalizeFilterDate(std::string value, bool endOfDay) {
+    if (value.empty()) return "";
+
+    std::replace(value.begin(), value.end(), 'T', '_');
+    std::replace(value.begin(), value.end(), ':', '_');
+
+    if (value.size() == 10) {
+        value += endOfDay ? "_23_59_59" : "_00_00_00";
+    } else if (value.size() == 16) {
+        value += endOfDay ? "_59" : "_00";
+    }
+
+    return value;
+}
+
+static std::string extractTimestampFromRecordingName(const std::string& name) {
+    for (size_t i = 0; i + 19 <= name.size(); ++i) {
+        if (std::isdigit((unsigned char)name[i]) &&
+            std::isdigit((unsigned char)name[i + 1]) &&
+            std::isdigit((unsigned char)name[i + 2]) &&
+            std::isdigit((unsigned char)name[i + 3]) &&
+            name[i + 4] == '-' &&
+            std::isdigit((unsigned char)name[i + 5]) &&
+            std::isdigit((unsigned char)name[i + 6]) &&
+            name[i + 7] == '-' &&
+            std::isdigit((unsigned char)name[i + 8]) &&
+            std::isdigit((unsigned char)name[i + 9]) &&
+            name[i + 10] == '_' &&
+            std::isdigit((unsigned char)name[i + 11]) &&
+            std::isdigit((unsigned char)name[i + 12]) &&
+            name[i + 13] == '_' &&
+            std::isdigit((unsigned char)name[i + 14]) &&
+            std::isdigit((unsigned char)name[i + 15]) &&
+            name[i + 16] == '_' &&
+            std::isdigit((unsigned char)name[i + 17]) &&
+            std::isdigit((unsigned char)name[i + 18])) {
+            return name.substr(i, 19);
+        }
+    }
+
+    return "";
+}
+
+static bool recordingMatchesFilters(const std::string& name,
+                                    const std::string& extension,
+                                    const std::string& nameFilter,
+                                    const std::string& fromFilter,
+                                    const std::string& toFilter) {
+    if (!extension.empty() && !endsWith(toLower(name), "." + toLower(extension))) return false;
+    if (!nameFilter.empty() && toLower(name).find(toLower(nameFilter)) == std::string::npos) return false;
+
+    if (!fromFilter.empty() || !toFilter.empty()) {
+        std::string timestamp = extractTimestampFromRecordingName(name);
+        if (timestamp.empty()) return false;
+        if (!fromFilter.empty() && timestamp < fromFilter) return false;
+        if (!toFilter.empty() && timestamp > toFilter) return false;
+    }
+
+    return true;
+}
+
+static uintmax_t removeFilesWithExtension(const std::filesystem::path& root, const std::string& extension) {
     std::error_code ec;
     if (!std::filesystem::exists(root, ec)) return 0;
 
@@ -67,39 +147,33 @@ static uintmax_t removeFilesWithExtension(const std::filesystem::path& root, con
         std::error_code removeEc;
         if (std::filesystem::remove(entry.path(), removeEc)) removed++;
     }
-
     return removed;
 }
 
-static void writeSensorCsvHeader(const std::filesystem::path& filePath)
-{
+static void writeSensorCsvHeader(const std::filesystem::path& filePath) {
     std::ofstream file(filePath, std::ios::trunc);
     file << "timestamp,internal_temp,external_temp,humidity\n";
 }
 
-static std::filesystem::path autoCleanupConfigPath()
-{
+static std::filesystem::path autoCleanupConfigPath() {
     return std::filesystem::path(System::dataFilesFolder) / AUTO_CLEANUP_FILE;
 }
 
-static bool autoCleanupEnabled()
-{
+static bool autoCleanupEnabled() {
     std::ifstream file(autoCleanupConfigPath());
     std::string value;
     std::getline(file, value);
     return value == "1" || value == "true" || value == "on";
 }
 
-static bool writeAutoCleanupEnabled(bool enabled)
-{
+static bool writeAutoCleanupEnabled(bool enabled) {
     std::ofstream file(autoCleanupConfigPath(), std::ios::trunc);
     if (!file.is_open()) return false;
     file << (enabled ? "1" : "0") << "\n";
     return true;
 }
 
-static uintmax_t removeOldestPercent(const std::filesystem::path& root, const std::string& extension, double percent)
-{
+static uintmax_t removeOldestPercent(const std::filesystem::path& root, const std::string& extension, double percent) {
     std::error_code ec;
     if (!std::filesystem::exists(root, ec)) return 0;
 
@@ -131,8 +205,7 @@ static uintmax_t removeOldestPercent(const std::filesystem::path& root, const st
     return removed;
 }
 
-static uintmax_t trimCsvOldestPercent(const std::filesystem::path& filePath, double percent)
-{
+static uintmax_t trimCsvOldestPercent(const std::filesystem::path& filePath, double percent) {
     std::ifstream in(filePath);
     if (!in.is_open()) return 0;
 
@@ -168,10 +241,8 @@ struct AutoCleanupResult {
     uintmax_t csvRowsRemoved = 0;
 };
 
-static AutoCleanupResult runAutoCleanupIfNeeded(double usedPercent)
-{
+static AutoCleanupResult runAutoCleanupIfNeeded(double usedPercent) {
     AutoCleanupResult result;
-
     if (!autoCleanupEnabled() || usedPercent <= AUTO_CLEANUP_THRESHOLD_PERCENT) {
         return result;
     }
@@ -187,34 +258,28 @@ static AutoCleanupResult runAutoCleanupIfNeeded(double usedPercent)
     return result;
 }
 
-string Login::exec(string params)
-{
+string Login::exec(string params) {
     string user = getPostParam(params, "user");
     string password = getPostParam(params, "pass");
     string passHash = sha256(password);
 
     std::ifstream file(System::dataFilesFolder + "/credentials.txt");
-    if (!file.is_open())
-        return "{\"ok\":false,\"error\":\"no credentials file\"}";
+    if (!file.is_open()) return "{\"ok\":false,\"error\":\"no credentials file\"}";
 
     std::string line;
-    while (std::getline(file, line))
-    {
+    while (std::getline(file, line)) {
         size_t sep = line.find(':');
         if (sep == std::string::npos) continue;
 
         string fileUser = line.substr(0, sep);
         string fileHash = line.substr(sep + 1);
-
-        if (fileUser == user && fileHash == passHash)
-            return "{\"ok\":true}";
+        if (fileUser == user && fileHash == passHash) return "{\"ok\":true}";
     }
 
     return "{\"ok\":false}";
 }
 
-string ListWavFiles::exec(string params)
-{
+string ListWavFiles::exec(string params) {
     return string();
 }
 
@@ -226,85 +291,86 @@ time_t to_time_t(TP tp) {
     return system_clock::to_time_t(sctp);
 }
 
-string ListFiles::exec(string params)
-{
+string ListFiles::exec(string params) {
     std::string path = getPostParam(params, "directory");
+    std::string extension = getPostParam(params, "extension");
+    std::string nameFilter = getPostParam(params, "name");
+    if (nameFilter.empty()) nameFilter = getPostParam(params, "contains");
+    std::string fromFilter = normalizeFilterDate(getPostParam(params, "from"), false);
+    std::string toFilter = normalizeFilterDate(getPostParam(params, "to"), true);
+
     replaceSubstrs(path, "/../", "/"); // avoid relative paths
     replaceSubstrs(path, "//", "/"); // avoid relative paths
 
     int parentIdx = (int)path.find_last_of("/", path.length() - 2);
     string parentPath = path;
-    if (parentIdx != string::npos)
-        parentPath = path.substr(0, parentIdx + 1);
+    if (parentIdx != string::npos) parentPath = path.substr(0, parentIdx + 1);
 
     std::string realPath = System::dataFilesFolder + "/" + path;
     std::string directories = "{\"files\": [";
     std::map<time_t, std::vector<std::filesystem::directory_entry>, std::greater<time_t>> sort_by_time;
-
     int countFiles = 0;
-    for (const auto& entry : std::filesystem::directory_iterator(realPath))
-    {
+
+    for (const auto& entry : std::filesystem::directory_iterator(realPath)) {
         auto time = to_time_t(entry.last_write_time());
         sort_by_time[time].push_back(entry);
     }
 
     // add previous folder
     directories += "\n{\n"
-        "\"parent\":\"" + parentPath + "\",\n"
-        "\"name\":\"\",\n"
-        "\"date\":\"\",\n"
-        "\"type\":\"PARENTDIR\"\n"
-        "}\n,";
+                   "\"parent\":\"" + parentPath + "\",\n"
+                   "\"name\":\"\",\n"
+                   "\"date\":\"\",\n"
+                   "\"type\":\"PARENTDIR\"\n"
+                   "}\n,";
 
-    for (auto const& [time, entryList] : sort_by_time)
-    {
+    for (auto const& [time, entryList] : sort_by_time) {
         for (auto entry : entryList) {
             std::string href;
-            std::string name = (char*)entry.path().filename().u8string().c_str();
+            std::string name = entry.path().filename().string();
             string folderDate = std::string(asctime(std::localtime(&time)));
             folderDate.pop_back(); // scape last \n
-            if (entry.is_directory())
-            {
+            if (entry.is_directory()) {
                 href = name + "/";
                 directories += "\n{\n"
-                    "\"parent\":\"" + parentPath + "\",\n"
-                    "\"name\":\"" + href + "\",\n"
-                    "\"date\":\"" + folderDate + "\",\n"
-                    "\"type\":\"DIR\"\n"
-                    "}\n,";
+                               "\"parent\":\"" + parentPath + "\",\n"
+                               "\"name\":\"" + escapeJson(href) + "\",\n"
+                               "\"date\":\"" + escapeJson(folderDate) + "\",\n"
+                               "\"type\":\"DIR\"\n"
+                               "}\n,";
             }
 
             if (entry.is_regular_file()) {
                 href = name;
+                if (!recordingMatchesFilters(name, extension, nameFilter, fromFilter, toFilter)) continue;
+
                 directories += "\n{\n"
-                    "\"parent\":\"" + parentPath + "\",\n"
-                    "\"name\":\"" + href + "\",\n"
-                    "\"date\":\"" + folderDate + "\",\n"
-                    "\"type\":\"FILE\"\n"
-                    "}\n,";
+                               "\"parent\":\"" + parentPath + "\",\n"
+                               "\"name\":\"" + escapeJson(href) + "\",\n"
+                               "\"date\":\"" + escapeJson(folderDate) + "\",\n"
+                               "\"type\":\"FILE\"\n"
+                               "}\n,";
             }
             countFiles++;
         }
     }
-    directories.pop_back();
+
+    if (directories.back() == ',') directories.pop_back();
     directories += "]}";
     return directories;
 }
 
-string RecordData::exec(string params)
-{
+string RecordData::exec(string params) {
     json::JSON obj = json::JSON::Load(params);
     std::ofstream outfile;
     outfile.open(obj["fileName"].ToString(), std::ios_base::app);
-    for (auto& val : *(obj.Internal.Map))
-        outfile << val.second << "\t";
+    for (auto& val : *(obj.Internal.Map)) outfile << val.second << "\t";
     outfile << "\n";
     outfile.close();
     return "OK";
 }
 
-string GetConfig::exec(string params)
-{
+string GetConfig::exec(string params) {
     std::map<std::string, std::string> defaults = {
         {"STATION", "TECHOUTAD_"},
         {"BITRATE", "16"},
@@ -340,21 +406,17 @@ string GetConfig::exec(string params)
     return json;
 }
 
-string SaveConfig::exec(string params)
-{
+string SaveConfig::exec(string params) {
     const std::vector<std::string> keys = {
-        "STATION", "BITRATE", "SAMPLE_RATE", "GAIN",
-        "DURATION", "IDRECORDER", "SLEEPDURATION", "GPIO_PIN"
+        "STATION", "BITRATE", "SAMPLE_RATE", "GAIN", "DURATION", "IDRECORDER", "SLEEPDURATION", "GPIO_PIN"
     };
 
     std::ofstream file(System::dataFilesFolder + "/config.txt", std::ios::trunc);
-    if (!file.is_open())
-        return "{\"ok\":false,\"error\":\"cannot write config\"}";
+    if (!file.is_open()) return "{\"ok\":false,\"error\":\"cannot write config\"}";
 
     for (auto& key : keys) {
         std::string val = getPostParam(params, key);
-        if (!val.empty())
-            file << key << "=" << val << "\n";
+        if (!val.empty()) file << key << "=" << val << "\n";
     }
     file.close();
 
@@ -367,8 +429,7 @@ string SaveConfig::exec(string params)
     return "{\"ok\":true}";
 }
 
-string MemoryStatus::exec(string params)
-{
+string MemoryStatus::exec(string params) {
     std::error_code ec;
     auto info = std::filesystem::space(System::dataFilesFolder, ec);
     if (ec) {
@@ -391,13 +452,12 @@ string MemoryStatus::exec(string params)
     uintmax_t pngCount = 0;
     uintmax_t wavBytes = 0;
     uintmax_t pngBytes = 0;
-
     std::filesystem::path recordings = std::filesystem::path(System::dataFilesFolder) / "recordings";
+
     if (std::filesystem::exists(recordings, ec)) {
         for (const auto& entry : std::filesystem::recursive_directory_iterator(recordings, std::filesystem::directory_options::skip_permission_denied, ec)) {
             if (ec) break;
             if (!entry.is_regular_file(ec)) continue;
-
             uintmax_t size = entry.file_size(ec);
             if (ec) size = 0;
 
@@ -429,23 +489,23 @@ string MemoryStatus::exec(string params)
     json << "\"auto_cleanup_png_removed\":" << cleanup.pngRemoved << ",";
     json << "\"auto_cleanup_csv_rows_removed\":" << cleanup.csvRowsRemoved;
     json << "}";
+
     return json.str();
 }
 
-string ClearStats::exec(string params)
-{
+string ClearStats::exec(string params) {
     try {
         std::filesystem::path sensorCsv = std::filesystem::path(System::dataFilesFolder) / "sensor_history.csv";
-
+        std::filesystem::path cpuTemp = std::filesystem::path(System::dataFilesFolder) / "cpu_temp.txt";
         writeSensorCsvHeader(sensorCsv);
+        std::ofstream(cpuTemp, std::ios::trunc).close();
         return "{\"ok\":true}";
     } catch (...) {
         return "{\"ok\":false,\"error\":\"cannot clear stats files\"}";
     }
 }
 
-string ClearSpectrograms::exec(string params)
-{
+string ClearSpectrograms::exec(string params) {
     try {
         std::filesystem::path recordings = std::filesystem::path(System::dataFilesFolder) / "recordings";
         uintmax_t removed = removeFilesWithExtension(recordings, ".png");
@@ -455,8 +515,7 @@ string ClearSpectrograms::exec(string params)
     }
 }
 
-string ClearAudios::exec(string params)
-{
+string ClearAudios::exec(string params) {
     try {
         std::filesystem::path recordings = std::filesystem::path(System::dataFilesFolder) / "recordings";
         uintmax_t removed = removeFilesWithExtension(recordings, ".wav");
@@ -466,13 +525,11 @@ string ClearAudios::exec(string params)
     }
 }
 
-string GetAutoCleanup::exec(string params)
-{
+string GetAutoCleanup::exec(string params) {
     return std::string("{\"ok\":true,\"enabled\":") + (autoCleanupEnabled() ? "true" : "false") + "}";
 }
 
-string SaveAutoCleanup::exec(string params)
-{
+string SaveAutoCleanup::exec(string params) {
     std::string enabled = getPostParam(params, "enabled");
     bool isEnabled = enabled == "1" || enabled == "true" || enabled == "on";
 
