@@ -4,300 +4,150 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="common.css">
   <title>Estado</title>
-
   <style>
-    :root{
-      --card: rgba(0,0,0,0.45);
-      --card-border: rgba(255,255,255,0.15);
-      --text:#e8f5e9;
-      --muted:#b7d6b8;
-      --accent:#4CAF50;
-      --accent-dark:#2e7d32;
-      --ok:#4CAF50;
-      --warn:#f59e0b;
-      --off:#ef4444;
-      --info:#60a5fa;
-    }
-
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      color:var(--text);
-      background:
-        linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
-        url("fondo.jpg");
-      background-size:cover;
-      background-position:center;
-      background-attachment:fixed;
-      min-height:100vh;
-    }
-
-    .wrapper{
-      max-width:1100px;
-      margin:auto;
-      padding:30px;
-    }
-
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:16px;
-      margin-bottom:30px;
-      flex-wrap:wrap;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:15px;
-    }
-
-    .brand-badge{
-      width:52px;
-      height:52px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-radius:14px;
-      background:rgba(0,0,0,0.35);
-      border:1px solid rgba(255,255,255,0.2);
-    }
-
-    .brand-badge img{
-      width:32px;
-      height:32px;
-      object-fit:contain;
-    }
-
-    h1{ margin:0; font-size:30px; }
-    h2{ margin:0 0 8px 0; font-size:34px; }
-    h3{ margin:0 0 18px 0; font-size:24px; }
-
-    .subtitle{
-      margin-top:4px;
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .actions{ display:flex; gap:12px; flex-wrap:wrap; }
-
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:12px 18px;
-      border-radius:12px;
-      text-decoration:none;
-      font-weight:bold;
-      border:none;
-      cursor:pointer;
-      color:white;
-      background:var(--accent);
-    }
-
-    .btn:hover{ background:var(--accent-dark); }
-
-    .btn-secondary{
-      background:rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.12);
-    }
-
-    .hero-card,
-    .card{
-      background:var(--card);
-      border:1px solid var(--card-border);
-      border-radius:20px;
-      padding:24px;
-      backdrop-filter:blur(8px);
-      margin-bottom:24px;
-    }
-
-    .hero-card{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:20px;
-      flex-wrap:wrap;
-    }
-
-    .hero-card p{
-      margin:0;
-      color:var(--muted);
-      line-height:1.6;
-      max-width:720px;
-    }
-
-    .big-status{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      font-size:18px;
-      font-weight:bold;
-      padding:14px 18px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,0.12);
-      background:rgba(255,255,255,0.06);
-      min-width:220px;
-      justify-content:center;
-    }
-
-    .dot{
-      width:14px;
-      height:14px;
-      border-radius:50%;
-      background:var(--warn);
-      box-shadow:0 0 18px rgba(255,255,255,0.25);
-      flex-shrink:0;
-    }
-
-    .dot.ok{ background:var(--ok); box-shadow:0 0 18px rgba(76,175,80,0.6); }
-    .dot.off{ background:var(--off); box-shadow:0 0 18px rgba(239,68,68,0.6); }
-    .dot.info{ background:var(--info); box-shadow:0 0 18px rgba(96,165,250,0.6); }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:20px;
-      margin-bottom:24px;
-    }
-
-    .metric{
-      padding:20px;
-      border-radius:18px;
-      background:rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.08);
-    }
-
-    .metric-label{
-      color:var(--muted);
-      font-size:14px;
-      margin-bottom:12px;
-    }
-
-    .metric-value{
-      font-size:28px;
-      font-weight:bold;
-      word-break:break-word;
-    }
-
-    .metric-sub{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.5;
-    }
-
-    .badge{
-      display:inline-block;
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:13px;
-      font-weight:bold;
-      margin-top:10px;
-      border:1px solid rgba(255,255,255,0.14);
-    }
-
-    .badge.ok{ background:rgba(76,175,80,0.18); color:#d9f7dd; border-color:rgba(76,175,80,0.35); }
-    .badge.off{ background:rgba(239,68,68,0.18); color:#ffd7d7; border-color:rgba(239,68,68,0.35); }
-    .badge.warn{ background:rgba(245,158,11,0.18); color:#fff1d5; border-color:rgba(245,158,11,0.35); }
-    .badge.info{ background:rgba(96,165,250,0.18); color:#d9ebff; border-color:rgba(96,165,250,0.35); }
-
-    .info-list{
-      display:grid;
-      grid-template-columns:180px 1fr;
-      gap:10px 16px;
-      align-items:start;
-    }
-
-    .info-key{ color:var(--muted); font-weight:bold; }
-    .info-value{ word-break:break-word; }
-
-    .small{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:12px;
-    }
-
-    .service-grid{
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0, 1fr));
-      gap:16px;
-    }
-
-    .service-card{
-      border-radius:18px;
-      padding:18px;
-      background:rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.08);
-    }
-
-    .service-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:14px;
-    }
-
-    .service-name{
-      font-weight:bold;
-      font-size:18px;
-      word-break:break-word;
-    }
-
-    .service-fields{
-      display:grid;
-      grid-template-columns:110px 1fr;
-      gap:8px 10px;
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .service-fields strong{
-      color:var(--text);
-      font-weight:bold;
-      word-break:break-word;
-    }
-
-    .json-link{
-      color:#d9f7dd;
-      font-weight:bold;
-    }
-
-    @media (max-width:960px){
-      .service-grid{ grid-template-columns:1fr; }
-    }
-
-    @media (max-width:860px){
-      .grid{ grid-template-columns:1fr; }
-      .hero-card h2{ font-size:28px; }
-      .info-list{ grid-template-columns:1fr; }
-    }
+  :root{
+    --ok:#4CAF50;
+    --warn:#f59e0b;
+    --off:#ef4444;
+    --info:#60a5fa;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    color:var(--text);
+    background:
+      linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
+      url("fondo.jpg");
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+    min-height:100vh;
+  }
+  .wrapper{ max-width:1100px; margin:auto; padding:30px; }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:15px; }
+  .brand-badge{
+    width:52px;
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:rgba(0,0,0,0.35);
+    border:1px solid rgba(255,255,255,0.2);
+  }
+  .brand-badge img{ width:32px; height:32px; object-fit:contain; }
+  h1{ margin:0; font-size:30px; }
+  h2{ margin:0 0 8px 0; font-size:34px; }
+  h3{ margin:0 0 18px 0; font-size:24px; }
+  .subtitle{ margin-top:4px; color:var(--muted); font-size:14px; }
+  .actions{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .actions .back-btn{ margin-bottom:0; }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 18px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:bold;
+    border:none;
+    cursor:pointer;
+    color:white;
+    background:var(--accent);
+  }
+  .btn:hover{ background:var(--accent-dark); }
+  .hero-card,
+  .card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:24px;
+    backdrop-filter:blur(8px);
+    margin-bottom:24px;
+  }
+  .hero-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .hero-card p{ margin:0; color:var(--muted); line-height:1.6; max-width:720px; }
+  .big-status{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:18px;
+    font-weight:bold;
+    padding:14px 18px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.06);
+    min-width:220px;
+    justify-content:center;
+  }
+  .dot{
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:var(--warn);
+    box-shadow:0 0 18px rgba(255,255,255,0.25);
+    flex-shrink:0;
+  }
+  .dot.ok{ background:var(--ok); box-shadow:0 0 18px rgba(76,175,80,0.6); }
+  .dot.off{ background:var(--off); box-shadow:0 0 18px rgba(239,68,68,0.6); }
+  .dot.info{ background:var(--info); box-shadow:0 0 18px rgba(96,165,250,0.6); }
+  .grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; margin-bottom:24px; }
+  .metric{ padding:20px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+  .metric-label{ color:var(--muted); font-size:14px; margin-bottom:12px; }
+  .metric-value{ font-size:28px; font-weight:bold; word-break:break-word; }
+  .metric-sub{ margin-top:10px; color:var(--muted); font-size:14px; line-height:1.5; }
+  .badge{ display:inline-block; padding:8px 12px; border-radius:999px; font-size:13px; font-weight:bold; margin-top:10px; border:1px solid rgba(255,255,255,0.14); }
+  .badge.ok{ background:rgba(76,175,80,0.18); color:#d9f7dd; border-color:rgba(76,175,80,0.35); }
+  .badge.off{ background:rgba(239,68,68,0.18); color:#ffd7d7; border-color:rgba(239,68,68,0.35); }
+  .badge.warn{ background:rgba(245,158,11,0.18); color:#fff1d5; border-color:rgba(245,158,11,0.35); }
+  .badge.info{ background:rgba(96,165,250,0.18); color:#d9ebff; border-color:rgba(96,165,250,0.35); }
+  .info-list{ display:grid; grid-template-columns:180px 1fr; gap:10px 16px; align-items:start; }
+  .info-key{ color:var(--muted); font-weight:bold; }
+  .info-value{ word-break:break-word; }
+  .small{ color:var(--muted); font-size:13px; margin-top:12px; }
+  .service-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
+  .service-card{ border-radius:18px; padding:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+  .service-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+  .service-name{ font-weight:bold; font-size:18px; word-break:break-word; }
+  .service-fields{ display:grid; grid-template-columns:110px 1fr; gap:8px 10px; color:var(--muted); font-size:14px; }
+  .service-fields strong{ color:var(--text); font-weight:bold; word-break:break-word; }
+  .json-link{ color:#d9f7dd; font-weight:bold; }
+  @media (max-width:960px){ .service-grid{ grid-template-columns:1fr; } }
+  @media (max-width:860px){ .grid{ grid-template-columns:1fr; } .hero-card h2{ font-size:28px; } .info-list{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <div class="wrapper">
-
-    <div class="topbar">
-      <div class="brand">
-        <div class="brand-badge">
-          <img src="favicon.ico" alt="logo">
-        </div>
-        <div>
-          <h1>Estado</h1>
-          <div class="subtitle">Supervisión de la grabadora, contenedores y watchdog</div>
-        </div>
+    <header class="page-header">
+      <a class="page-logo-link" href="/index.html" aria-label="Inicio">
+        <div class="brand-badge"><img src="favicon.ico" alt="logo"></div>
+      </a>
+      <div class="page-title">
+        <h1>Estado</h1>
+        <p>Supervisión de la grabadora, contenedores y watchdog</p>
       </div>
-
       <div class="actions">
-        <a class="btn btn-secondary" href="index.html">← Volver al menú</a>
+        <a class="back-btn" href="/index.html">← Volver</a>
         <button class="btn" onclick="loadAllStatus()">Actualizar</button>
       </div>
-    </div>
+    </header>
 
     <div class="hero-card">
       <div>
@@ -308,7 +158,6 @@
           <strong>server</strong>, cooldowns y backoff del watchdog.
         </p>
       </div>
-
       <div class="big-status" id="globalStatus">
         <span class="dot" id="globalDot"></span>
         <span id="globalText">Cargando...</span>
@@ -322,21 +171,18 @@
         <div id="containerBadge"></div>
         <div class="metric-sub">Estado Docker de <strong>bird-recorder</strong>.</div>
       </div>
-
       <div class="metric">
         <div class="metric-label">Script de grabación</div>
         <div class="metric-value" id="recordStatus">--</div>
         <div id="recordBadge"></div>
         <div class="metric-sub">Comprueba si <strong>record.sh</strong> aparece en <code>docker top</code>.</div>
       </div>
-
       <div class="metric">
         <div class="metric-label">Captura de audio</div>
         <div class="metric-value" id="soxStatus">--</div>
         <div id="soxBadge"></div>
         <div class="metric-sub">Comprueba si <strong>sox</strong> está grabando ahora mismo.</div>
       </div>
-
       <div class="metric">
         <div class="metric-label">Archivo actual</div>
         <div class="metric-value" id="currentFile">--</div>
@@ -360,179 +206,159 @@
       <div class="info-list">
         <div class="info-key">Última actualización web</div>
         <div class="info-value" id="lastUpdate">--</div>
-
         <div class="info-key">Última actualización watchdog</div>
         <div class="info-value" id="watchdogUpdate">--</div>
-
         <div class="info-key">Resumen servicios</div>
         <div class="info-value" id="servicesSummary">--</div>
-
         <div class="info-key">Proceso record.sh</div>
         <div class="info-value" id="detailRecord">--</div>
-
         <div class="info-key">Proceso sox</div>
         <div class="info-value" id="detailSox">--</div>
-
         <div class="info-key">Comando actual</div>
         <div class="info-value" id="detailCommand">--</div>
       </div>
-
       <div class="small">Refresco automático cada 5 segundos.</div>
     </div>
-
   </div>
 
   <script>
-    function setBadge(containerId, active, onText, offText) {
-      const el = document.getElementById(containerId);
-      el.innerHTML = "";
-      const badge = document.createElement("span");
-      badge.className = "badge " + (active ? "ok" : "off");
-      badge.textContent = active ? onText : offText;
-      el.appendChild(badge);
+  function setBadge(containerId, active, onText, offText) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = "";
+    const badge = document.createElement("span");
+    badge.className = "badge " + (active ? "ok" : "off");
+    badge.textContent = active ? onText : offText;
+    el.appendChild(badge);
+  }
+
+  function badgeClassForStatus(status) {
+    if (status === "ok" || status === "healthy") return "ok";
+    if (status === "starting") return "warn";
+    if (status === "backoff") return "warn";
+    if (status === "none") return "info";
+    return "off";
+  }
+
+  function formatSeconds(seconds) {
+    seconds = Number(seconds || 0);
+    if (seconds <= 0) return "0s";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m <= 0) return `${s}s`;
+    return `${m}m ${s}s`;
+  }
+
+  function setGlobalStatus(recordingStatus, watchdogStatus) {
+    const globalText = document.getElementById("globalText");
+    const globalDot = document.getElementById("globalDot");
+    const summary = watchdogStatus && watchdogStatus.summary ? watchdogStatus.summary : null;
+    if (summary && ((summary.unhealthy || 0) > 0 || (summary.stopped || 0) > 0 || (summary.missing || 0) > 0)) {
+      globalText.textContent = "Revisar servicios";
+      globalDot.className = "dot off";
+      return;
     }
-
-    function badgeClassForStatus(status) {
-      if (status === "ok" || status === "healthy") return "ok";
-      if (status === "starting") return "warn";
-      if (status === "backoff") return "warn";
-      if (status === "none") return "info";
-      return "off";
+    if (summary && (summary.backoff || 0) > 0) {
+      globalText.textContent = "Backoff activo";
+      globalDot.className = "dot";
+      return;
     }
-
-    function formatSeconds(seconds) {
-      seconds = Number(seconds || 0);
-      if (seconds <= 0) return "0s";
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      if (m <= 0) return `${s}s`;
-      return `${m}m ${s}s`;
+    if (recordingStatus.container_running && recordingStatus.record_running && recordingStatus.sox_running) {
+      globalText.textContent = "Grabando";
+      globalDot.className = "dot ok";
+    } else if (recordingStatus.container_running && recordingStatus.record_running) {
+      globalText.textContent = "Activo";
+      globalDot.className = "dot";
+    } else {
+      globalText.textContent = "Parado";
+      globalDot.className = "dot off";
     }
+  }
 
-    function setGlobalStatus(recordingStatus, watchdogStatus) {
-      const globalText = document.getElementById("globalText");
-      const globalDot = document.getElementById("globalDot");
-      const summary = watchdogStatus && watchdogStatus.summary ? watchdogStatus.summary : null;
-
-      if (summary && ((summary.unhealthy || 0) > 0 || (summary.stopped || 0) > 0 || (summary.missing || 0) > 0)) {
-        globalText.textContent = "Revisar servicios";
-        globalDot.className = "dot off";
-        return;
-      }
-
-      if (summary && (summary.backoff || 0) > 0) {
-        globalText.textContent = "Backoff activo";
-        globalDot.className = "dot";
-        return;
-      }
-
-      if (recordingStatus.container_running && recordingStatus.record_running && recordingStatus.sox_running) {
-        globalText.textContent = "Grabando";
-        globalDot.className = "dot ok";
-      } else if (recordingStatus.container_running && recordingStatus.record_running) {
-        globalText.textContent = "Activo";
-        globalDot.className = "dot";
-      } else {
-        globalText.textContent = "Parado";
-        globalDot.className = "dot off";
-      }
+  function renderServices(data) {
+    const grid = document.getElementById("servicesGrid");
+    grid.innerHTML = "";
+    if (!data || !data.containers) {
+      grid.innerHTML = '<div class="metric-sub">No se pudo cargar /watchdog_status.json</div>';
+      return;
     }
+    Object.entries(data.containers).forEach(([name, service]) => {
+      const card = document.createElement("div");
+      card.className = "service-card";
+      const status = service.status || service.health || "unknown";
+      const badgeClass = badgeClassForStatus(status);
+      const lastRestart = service.last_restart_at || "Nunca";
+      card.innerHTML = `
+        <div class="service-head">
+          <div class="service-name">${name}</div>
+          <span class="badge ${badgeClass}">${status}</span>
+        </div>
+        <div class="service-fields">
+          <span>Docker</span><strong>${service.docker_state || "--"}</strong>
+          <span>Health</span><strong>${service.health || "--"}</strong>
+          <span>Running</span><strong>${service.running ? "sí" : "no"}</strong>
+          <span>Reinicios</span><strong>${service.restart_count_in_window ?? 0}</strong>
+          <span>Cooldown</span><strong>${formatSeconds(service.cooldown_remaining_seconds)}</strong>
+          <span>Backoff</span><strong>${formatSeconds(service.backoff_remaining_seconds)}</strong>
+          <span>Últ. restart</span><strong>${lastRestart}</strong>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
 
-    function renderServices(data) {
-      const grid = document.getElementById("servicesGrid");
-      grid.innerHTML = "";
+  async function loadRecordingStatus() {
+    const response = await fetch("/status", { cache: "no-store" });
+    return await response.json();
+  }
 
-      if (!data || !data.containers) {
-        grid.innerHTML = '<div class="metric-sub">No se pudo cargar /watchdog_status.json</div>';
-        return;
-      }
+  async function loadWatchdogStatus() {
+    const response = await fetch("/watchdog_status.json", { cache: "no-store" });
+    return await response.json();
+  }
 
-      Object.entries(data.containers).forEach(([name, service]) => {
-        const card = document.createElement("div");
-        card.className = "service-card";
-
-        const status = service.status || service.health || "unknown";
-        const badgeClass = badgeClassForStatus(status);
-        const lastRestart = service.last_restart_at || "Nunca";
-
-        card.innerHTML = `
-          <div class="service-head">
-            <div class="service-name">${name}</div>
-            <span class="badge ${badgeClass}">${status}</span>
-          </div>
-          <div class="service-fields">
-            <span>Docker</span><strong>${service.docker_state || "--"}</strong>
-            <span>Health</span><strong>${service.health || "--"}</strong>
-            <span>Running</span><strong>${service.running ? "sí" : "no"}</strong>
-            <span>Reinicios</span><strong>${service.restart_count_in_window ?? 0}</strong>
-            <span>Cooldown</span><strong>${formatSeconds(service.cooldown_remaining_seconds)}</strong>
-            <span>Backoff</span><strong>${formatSeconds(service.backoff_remaining_seconds)}</strong>
-            <span>Últ. restart</span><strong>${lastRestart}</strong>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
+  async function loadAllStatus() {
+    let recordingStatus = null;
+    let watchdogStatus = null;
+    try {
+      recordingStatus = await loadRecordingStatus();
+      document.getElementById("containerStatus").textContent = recordingStatus.container_status || "--";
+      document.getElementById("recordStatus").textContent = recordingStatus.record_running ? "running" : "stopped";
+      document.getElementById("soxStatus").textContent = recordingStatus.sox_running ? "active" : "inactive";
+      document.getElementById("currentFile").textContent = recordingStatus.current_file || "Sin archivo detectado";
+      document.getElementById("lastUpdate").textContent = new Date().toLocaleString();
+      document.getElementById("detailRecord").textContent = recordingStatus.record_command || "No detectado";
+      document.getElementById("detailSox").textContent = recordingStatus.sox_command || "No detectado";
+      document.getElementById("detailCommand").textContent = recordingStatus.sox_command || recordingStatus.record_command || "--";
+      setBadge("containerBadge", recordingStatus.container_running, "Contenedor activo", "Contenedor parado");
+      setBadge("recordBadge", recordingStatus.record_running, "record.sh activo", "record.sh no detectado");
+      setBadge("soxBadge", recordingStatus.sox_running, "sox grabando", "sox no detectado");
+    } catch (error) {
+      recordingStatus = { container_running:false, record_running:false, sox_running:false };
+      document.getElementById("containerStatus").textContent = "error";
+      document.getElementById("recordStatus").textContent = "error";
+      document.getElementById("soxStatus").textContent = "error";
+      document.getElementById("currentFile").textContent = "No se pudo cargar /status";
+      document.getElementById("detailCommand").textContent = String(error);
+      setBadge("containerBadge", false, "", "Error");
+      setBadge("recordBadge", false, "", "Error");
+      setBadge("soxBadge", false, "", "Error");
     }
-
-    async function loadRecordingStatus() {
-      const response = await fetch("/status", { cache: "no-store" });
-      return await response.json();
+    try {
+      watchdogStatus = await loadWatchdogStatus();
+      renderServices(watchdogStatus);
+      document.getElementById("watchdogUpdate").textContent = watchdogStatus.updated_at || "--";
+      const s = watchdogStatus.summary || {};
+      document.getElementById("servicesSummary").textContent = `total=${s.total ?? 0}, ok=${s.ok ?? 0}, starting=${s.starting ?? 0}, unhealthy=${s.unhealthy ?? 0}, backoff=${s.backoff ?? 0}, stopped=${s.stopped ?? 0}, missing=${s.missing ?? 0}`;
+    } catch (error) {
+      renderServices(null);
+      document.getElementById("watchdogUpdate").textContent = "Error cargando /watchdog_status.json";
+      document.getElementById("servicesSummary").textContent = String(error);
     }
+    setGlobalStatus(recordingStatus, watchdogStatus);
+  }
 
-    async function loadWatchdogStatus() {
-      const response = await fetch("/watchdog_status.json", { cache: "no-store" });
-      return await response.json();
-    }
-
-    async function loadAllStatus() {
-      let recordingStatus = null;
-      let watchdogStatus = null;
-
-      try {
-        recordingStatus = await loadRecordingStatus();
-
-        document.getElementById("containerStatus").textContent = recordingStatus.container_status || "--";
-        document.getElementById("recordStatus").textContent = recordingStatus.record_running ? "running" : "stopped";
-        document.getElementById("soxStatus").textContent = recordingStatus.sox_running ? "active" : "inactive";
-        document.getElementById("currentFile").textContent = recordingStatus.current_file || "Sin archivo detectado";
-
-        document.getElementById("lastUpdate").textContent = new Date().toLocaleString();
-        document.getElementById("detailRecord").textContent = recordingStatus.record_command || "No detectado";
-        document.getElementById("detailSox").textContent = recordingStatus.sox_command || "No detectado";
-        document.getElementById("detailCommand").textContent = recordingStatus.sox_command || recordingStatus.record_command || "--";
-
-        setBadge("containerBadge", recordingStatus.container_running, "Contenedor activo", "Contenedor parado");
-        setBadge("recordBadge", recordingStatus.record_running, "record.sh activo", "record.sh no detectado");
-        setBadge("soxBadge", recordingStatus.sox_running, "sox grabando", "sox no detectado");
-      } catch (error) {
-        recordingStatus = { container_running:false, record_running:false, sox_running:false };
-        document.getElementById("containerStatus").textContent = "error";
-        document.getElementById("recordStatus").textContent = "error";
-        document.getElementById("soxStatus").textContent = "error";
-        document.getElementById("currentFile").textContent = "No se pudo cargar /status";
-        document.getElementById("detailCommand").textContent = String(error);
-        setBadge("containerBadge", false, "", "Error");
-        setBadge("recordBadge", false, "", "Error");
-        setBadge("soxBadge", false, "", "Error");
-      }
-
-      try {
-        watchdogStatus = await loadWatchdogStatus();
-        renderServices(watchdogStatus);
-        document.getElementById("watchdogUpdate").textContent = watchdogStatus.updated_at || "--";
-        const s = watchdogStatus.summary || {};
-        document.getElementById("servicesSummary").textContent = `total=${s.total ?? 0}, ok=${s.ok ?? 0}, starting=${s.starting ?? 0}, unhealthy=${s.unhealthy ?? 0}, backoff=${s.backoff ?? 0}, stopped=${s.stopped ?? 0}, missing=${s.missing ?? 0}`;
-      } catch (error) {
-        renderServices(null);
-        document.getElementById("watchdogUpdate").textContent = "Error cargando /watchdog_status.json";
-        document.getElementById("servicesSummary").textContent = String(error);
-      }
-
-      setGlobalStatus(recordingStatus, watchdogStatus);
-    }
-
-    loadAllStatus();
-    setInterval(loadAllStatus, 5000);
+  loadAllStatus();
+  setInterval(loadAllStatus, 5000);
   </script>
 </body>
 </html>
