@@ -1,5 +1,4 @@
 // Expone las rutas publicas
-
 #include "HttpConnection.h"
 #include "temperature_history.h"
 #include "System.h"
@@ -9,8 +8,7 @@
 #include <regex>
 #include <sstream>
 
-std::string HttpConnection::readData(size_t length)
-{
+std::string HttpConnection::readData(size_t length) {
     size_t recvSize = 0;
     std::string line;
     line.resize(length);
@@ -19,8 +17,7 @@ std::string HttpConnection::readData(size_t length)
     return line;
 }
 
-std::string HttpConnection::readLine()
-{
+std::string HttpConnection::readLine() {
     char buf[1];
     int recvSize = 0;
     std::string line;
@@ -33,8 +30,7 @@ std::string HttpConnection::readLine()
     return line;
 }
 
-void HttpConnection::buildMimeTypes()
-{
+void HttpConnection::buildMimeTypes() {
     this->mimeTypes["aac"] = "audio/aac";
     this->mimeTypes["abw"] = "application/x-abiword";
     this->mimeTypes["arc"] = "application/octet-stream";
@@ -97,8 +93,7 @@ void HttpConnection::buildMimeTypes()
     this->mimeTypes["7z"] = "application/x-7z-compressed";
 }
 
-void HttpConnection::parseMethod(std::string& line)
-{
+void HttpConnection::parseMethod(std::string& line) {
     int methodEnd = line.find(' ');
     std::string method = line.substr(0, methodEnd);
     size_t urlEnd = line.find(' ', methodEnd + 1);
@@ -108,28 +103,28 @@ void HttpConnection::parseMethod(std::string& line)
     parameters["METHODURL"] = url;
 }
 
-void HttpConnection::parseLine(std::string& line)
-{
+void HttpConnection::parseLine(std::string& line) {
     size_t keyEnd = line.find(':');
+    if (keyEnd == std::string::npos) return;
     std::string key = line.substr(0, keyEnd);
     size_t valueEnd = line.find('\r');
     std::string value = line.substr(keyEnd + 1, valueEnd - (keyEnd + 1));
     parameters[key] = value;
 }
 
-void HttpConnection::recvHttpPacket()
-{
+void HttpConnection::recvHttpPacket() {
     parameters.clear();
     rawHttpPacket = "";
     std::string line;
     line = readLine();
     rawHttpPacket += line;
     parseMethod(line);
+
     do {
         line = readLine();
         parseLine(line);
         rawHttpPacket += line;
-    } while (!line.empty() && line[0] != '\0' > 0 && line[0] != '\r');
+    } while (!line.empty() && line[0] != '\0' && line[0] != '\r');
 
     auto method = parameters.find("METHOD");
     if (method != parameters.end() && method->second == "POST") {
@@ -140,23 +135,20 @@ void HttpConnection::recvHttpPacket()
     }
 }
 
-string HttpConnection::readFileFromFolder(string fileName)
-{
+string HttpConnection::readFileFromFolder(string fileName) {
     string f = readFile(System::htmlFilesFolder + fileName);
     if (f.length() == 0) f = readFile(System::dataFilesFolder + fileName);
     return f;
 }
 
-std::string HttpConnection::trim(const std::string& s)
-{
+std::string HttpConnection::trim(const std::string& s) {
     size_t start = s.find_first_not_of(" \t\r\n");
     if (start == std::string::npos) return "";
     size_t end = s.find_last_not_of(" \t\r\n");
     return s.substr(start, end - start + 1);
 }
 
-std::string HttpConnection::escapeJson(const std::string& s)
-{
+std::string HttpConnection::escapeJson(const std::string& s) {
     std::string out;
     for (char c : s) {
         switch (c) {
@@ -173,8 +165,7 @@ std::string HttpConnection::escapeJson(const std::string& s)
     return out;
 }
 
-std::string HttpConnection::runCommand(const std::string& cmd)
-{
+std::string HttpConnection::runCommand(const std::string& cmd) {
     std::array<char, 256> buffer;
     std::string result;
     FILE* pipe = popen(cmd.c_str(), "r");
@@ -184,20 +175,19 @@ std::string HttpConnection::runCommand(const std::string& cmd)
     return result;
 }
 
-std::string HttpConnection::extractWavName(const std::string& text)
-{
+std::string HttpConnection::extractWavName(const std::string& text) {
     std::regex rgx(R"(/data/recordings/([^\s]+\.wav))");
     std::smatch match;
     if (std::regex_search(text, match, rgx)) return match[1];
     return "";
 }
 
-std::string HttpConnection::buildStatusJson()
-{
+std::string HttpConnection::buildStatusJson() {
     std::string containerStatus = trim(runCommand("docker inspect -f '{{.State.Status}}' bird-recorder 2>/dev/null"));
     std::string topOutput = runCommand("docker top bird-recorder 2>/dev/null");
     std::string recordLine = "";
     std::string soxLine = "";
+
     std::istringstream iss(topOutput);
     std::string line;
     while (std::getline(iss, line)) {
@@ -209,6 +199,7 @@ std::string HttpConnection::buildStatusJson()
     bool recordRunning = !recordLine.empty();
     bool soxRunning = !soxLine.empty();
     std::string currentFile = extractWavName(soxLine);
+
     std::string json = "{";
     json += "\"container_status\":\"" + escapeJson(containerStatus) + "\",";
     json += "\"container_running\":" + std::string(containerRunning ? "true" : "false") + ",";
@@ -221,16 +212,22 @@ std::string HttpConnection::buildStatusJson()
     return json;
 }
 
-std::string HttpConnection::buildTemperatureJson()
-{
+std::string HttpConnection::buildTemperatureJson() {
     std::string tempStr = trim(runCommand("cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null"));
     int tempValue = 0;
     if (!tempStr.empty()) tempValue = std::stoi(tempStr) / 1000;
     return "{\"cpu_temp\":" + std::to_string(tempValue) + "}";
 }
 
-void HttpConnection::parseHttpPacket()
-{
+static std::string buildMissingWatchdogJson(const std::string& path) {
+    std::string escapedPath = path;
+    for (size_t pos = escapedPath.find('"'); pos != std::string::npos; pos = escapedPath.find('"', pos + 2)) {
+        escapedPath.replace(pos, 1, "\\\"");
+    }
+    return "{\"updated_at\":null,\"updated_at_epoch\":0,\"watchdog\":{\"running\":false},\"containers\":{},\"summary\":{\"total\":0,\"ok\":0,\"starting\":0,\"unhealthy\":0,\"backoff\":0,\"stopped\":0,\"missing\":0},\"error\":\"watchdog status file not found\",\"path\":\"" + escapedPath + "\"}";
+}
+
+void HttpConnection::parseHttpPacket() {
     std::cout << rawHttpPacket << "\n";
     auto methodNode = parameters.end();
     response.header = response.body = response.type = "";
@@ -249,11 +246,22 @@ void HttpConnection::parseHttpPacket()
                 url = fullUrl;
                 queryString = "";
             }
+
             if (url.ends_with('/')) url = "/";
 
             if (url == "/status") {
                 response.type = mimeTypes["json"];
                 response.body = buildStatusJson();
+                response.header = createHeader("200 OK", response.type, response.body.length());
+                response.sendBody = true;
+                return;
+            }
+
+            if (url == "/watchdog_status.json" || url == "/watchdog/status") {
+                response.type = mimeTypes["json"];
+                std::string statusPath = System::dataFilesFolder + "/watchdog_status.json";
+                response.body = readFile(statusPath);
+                if (response.body.empty()) response.body = buildMissingWatchdogJson(statusPath);
                 response.header = createHeader("200 OK", response.type, response.body.length());
                 response.sendBody = true;
                 return;
@@ -323,8 +331,7 @@ void HttpConnection::parseHttpPacket()
     }
 }
 
-std::string HttpConnection::createHeader(std::string responseCode, std::string contentType, size_t contentLength)
-{
+std::string HttpConnection::createHeader(std::string responseCode, std::string contentType, size_t contentLength) {
     std::string httpHeader = "";
     if (responseCode == "404 Not Found") {
         httpHeader += "HTTP/1.1 404 Not Found\r\n";
@@ -343,15 +350,13 @@ std::string HttpConnection::createHeader(std::string responseCode, std::string c
     return httpHeader;
 }
 
-void HttpConnection::sendHttpPacket()
-{
+void HttpConnection::sendHttpPacket() {
     std::string httpPacket = response.header;
     if (response.sendBody) httpPacket += response.body;
     send(conn.socket, httpPacket.c_str(), (int)httpPacket.length(), MSG_NOSIGNAL);
 }
 
-void HttpConnection::clientLoop()
-{
+void HttpConnection::clientLoop() {
     while (conn.alive) {
         recvHttpPacket();
         parseHttpPacket();

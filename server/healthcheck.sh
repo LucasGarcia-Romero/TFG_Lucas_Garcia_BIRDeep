@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-URL="${SERVER_HEALTH_URL:-http://localhost:8000/}"
+URL="${SERVER_HEALTH_URL:-http://127.0.0.1:8000/}"
 
 if command -v wget >/dev/null 2>&1; then
   wget -q -O /dev/null -T 5 "$URL"

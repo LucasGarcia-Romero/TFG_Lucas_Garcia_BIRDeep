@@ -21,7 +21,6 @@ services:
       - SLEEPDURATION=10
       - GPIO_PIN=117
       - AUDIO_DEVICE=plughw:CARD=Microphone,DEV=0
-      # Hace referencia al audiomooth, mejor asi porque puede cambiar
       - WATCHDOG_MARGIN_SECONDS=600
       - WATCHDOG_MIN_VALID_WAV_RATIO_PERCENT=5
       - WATCHDOG_DISK_MAX_USED_PERCENT=95
@@ -68,7 +67,7 @@ services:
       - /data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SERVER_HEALTH_URL=http://localhost:8000/
+      - SERVER_HEALTH_URL=http://127.0.0.1:8000/
     healthcheck:
       test: ["CMD", "/app/healthcheck.sh"]
       interval: 60s
@@ -88,10 +87,15 @@ services:
       - server
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /data:/data
     environment:
       - WATCHDOG_CONTAINERS=bird-recorder,bird-stats,bird-http-server
       - CHECK_INTERVAL=60
       - WATCHDOG_RESTART_COOLDOWN_SECONDS=300
+      - WATCHDOG_FAILURE_WINDOW_SECONDS=1800
+      - WATCHDOG_MAX_RESTARTS_IN_WINDOW=3
+      - WATCHDOG_LONG_COOLDOWN_SECONDS=1800
+      - WATCHDOG_STATUS_FILE=/data/watchdog_status.json
 
 volumes:
   bird_data:

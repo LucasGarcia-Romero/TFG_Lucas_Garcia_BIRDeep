@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Watchdog multiservicio con cooldown fijo + backoff largo.
+# Watchdog multiservicio con cooldown fijo, backoff largo y estado JSON.
 #
 # Comportamiento:
 #   - Revisa todos los contenedores definidos en WATCHDOG_CONTAINERS.
@@ -10,37 +10,20 @@ set -euo pipefail
 #   - Cada contenedor tiene cooldown independiente.
 #   - Si un contenedor acumula demasiados reinicios dentro de una ventana temporal,
 #     entra en backoff largo para evitar bucles agresivos.
-#
-# Variables recomendadas:
-#
-#   WATCHDOG_CONTAINERS=bird-recorder,bird-stats,bird-http-server
-#   CHECK_INTERVAL=60
-#   WATCHDOG_RESTART_COOLDOWN_SECONDS=300
-#   WATCHDOG_FAILURE_WINDOW_SECONDS=1800
-#   WATCHDOG_MAX_RESTARTS_IN_WINDOW=3
-#   WATCHDOG_LONG_COOLDOWN_SECONDS=1800
-#
-# Compatibilidad:
-#   Si WATCHDOG_CONTAINERS no existe, usa RECORDER_CONTAINER.
-#   Si RECORDER_CONTAINER tampoco existe, usa bird-recorder.
+#   - En cada ciclo escribe WATCHDOG_STATUS_FILE para que el servidor HTTP lo exponga.
 
 WATCHDOG_CONTAINERS="${WATCHDOG_CONTAINERS:-${RECORDER_CONTAINER:-bird-recorder}}"
 CHECK_INTERVAL="${CHECK_INTERVAL:-60}"
 
-# Cooldown normal entre reinicios del mismo contenedor.
 RESTART_COOLDOWN="${WATCHDOG_RESTART_COOLDOWN_SECONDS:-300}"
-
-# Ventana temporal para contar fallos repetidos.
 FAILURE_WINDOW="${WATCHDOG_FAILURE_WINDOW_SECONDS:-1800}"
-
-# Maximo de reinicios permitidos dentro de FAILURE_WINDOW antes de activar backoff largo.
 MAX_RESTARTS_IN_WINDOW="${WATCHDOG_MAX_RESTARTS_IN_WINDOW:-3}"
-
-# Backoff largo cuando hay demasiados reinicios en la ventana.
 LONG_COOLDOWN="${WATCHDOG_LONG_COOLDOWN_SECONDS:-1800}"
 
 STATE_DIR="${WATCHDOG_STATE_DIR:-/tmp/watchdog-state}"
+STATUS_FILE="${WATCHDOG_STATUS_FILE:-/data/watchdog_status.json}"
 mkdir -p "$STATE_DIR"
+mkdir -p "$(dirname "$STATUS_FILE")" 2>/dev/null || true
 
 log() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') [watchdog] $*"
@@ -51,9 +34,26 @@ trim() {
 }
 
 safe_name() {
-  # Los nombres de contenedores suelen ser seguros, pero quitamos caracteres raros
-  # por si algun nombre llega con slash u otros simbolos.
   echo "$1" | sed 's/[^A-Za-z0-9_.-]/_/g'
+}
+
+json_escape() {
+  local value="${1:-}"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/\\n}"
+  value="${value//$'\r'/\\r}"
+  value="${value//$'\t'/\\t}"
+  printf '%s' "$value"
+}
+
+iso_time() {
+  local epoch="${1:-0}"
+  if [ "$epoch" -le 0 ] 2>/dev/null; then
+    printf 'null'
+  else
+    printf '"%s"' "$(date -Iseconds -d "@$epoch" 2>/dev/null || date -Iseconds)"
+  fi
 }
 
 last_restart_file_for() {
@@ -93,8 +93,6 @@ health_status() {
 
 health_detail() {
   local container="$1"
-
-  # Ultimos mensajes del healthcheck, limitados para no llenar los logs.
   docker inspect -f '{{range .State.Health.Log}}{{.Output}}{{end}}' "$container" 2>/dev/null | tail -c 700 || true
 }
 
@@ -183,6 +181,26 @@ backoff_remaining() {
   echo "$remaining"
 }
 
+cooldown_remaining() {
+  local container="$1"
+  local now="$2"
+  local last_file
+  local last
+  local elapsed
+  local remaining
+
+  last_file="$(last_restart_file_for "$container")"
+  last="$(read_number_file "$last_file" 0)"
+  elapsed=$((now - last))
+
+  if [ "$last" -le 0 ] || [ "$elapsed" -ge "$RESTART_COOLDOWN" ]; then
+    echo 0
+  else
+    remaining=$((RESTART_COOLDOWN - elapsed))
+    echo "$remaining"
+  fi
+}
+
 activate_long_backoff() {
   local container="$1"
   local now="$2"
@@ -260,6 +278,130 @@ restart_container() {
   fi
 }
 
+service_status_label() {
+  local exists="$1"
+  local running="$2"
+  local health="$3"
+  local backoff="$4"
+
+  if [ "$exists" != "true" ]; then
+    echo "missing"
+  elif [ "$backoff" -gt 0 ]; then
+    echo "backoff"
+  elif [ "$running" != "true" ]; then
+    echo "stopped"
+  elif [ "$health" = "healthy" ] || [ "$health" = "none" ]; then
+    echo "ok"
+  elif [ "$health" = "starting" ]; then
+    echo "starting"
+  elif [ "$health" = "unhealthy" ]; then
+    echo "unhealthy"
+  else
+    echo "unknown"
+  fi
+}
+
+write_status_json() {
+  local now
+  local tmp_file
+  local total=0
+  local ok=0
+  local starting=0
+  local unhealthy=0
+  local backoff=0
+  local missing=0
+  local stopped=0
+  local first=true
+  local container exists running state health detail count last last_iso backoff_seconds cooldown_seconds status
+
+  now="$(now_epoch)"
+  tmp_file="${STATUS_FILE}.tmp"
+
+  {
+    echo "{"
+    echo "  \"updated_at\": \"$(date -Iseconds)\","
+    echo "  \"updated_at_epoch\": ${now},"
+    echo "  \"watchdog\": {"
+    echo "    \"running\": true,"
+    echo "    \"check_interval_seconds\": ${CHECK_INTERVAL},"
+    echo "    \"restart_cooldown_seconds\": ${RESTART_COOLDOWN},"
+    echo "    \"failure_window_seconds\": ${FAILURE_WINDOW},"
+    echo "    \"max_restarts_in_window\": ${MAX_RESTARTS_IN_WINDOW},"
+    echo "    \"long_cooldown_seconds\": ${LONG_COOLDOWN}"
+    echo "  },"
+    echo "  \"containers\": {"
+
+    for container in "${CONTAINERS[@]}"; do
+      total=$((total + 1))
+      exists="false"
+      running="false"
+      state="missing"
+      health="missing"
+      detail=""
+
+      if container_exists "$container"; then
+        exists="true"
+        state="$(container_state "$container")"
+        if container_running "$container"; then
+          running="true"
+        fi
+        health="$(health_status "$container")"
+        detail="$(health_detail "$container")"
+      fi
+
+      count="$(restart_count_in_window "$container" "$now")"
+      last="$(read_number_file "$(last_restart_file_for "$container")" 0)"
+      backoff_seconds="$(backoff_remaining "$container" "$now")"
+      cooldown_seconds="$(cooldown_remaining "$container" "$now")"
+      status="$(service_status_label "$exists" "$running" "$health" "$backoff_seconds")"
+
+      case "$status" in
+        ok) ok=$((ok + 1)) ;;
+        starting) starting=$((starting + 1)) ;;
+        unhealthy) unhealthy=$((unhealthy + 1)) ;;
+        backoff) backoff=$((backoff + 1)) ;;
+        missing) missing=$((missing + 1)) ;;
+        stopped) stopped=$((stopped + 1)) ;;
+      esac
+
+      if [ "$first" = "true" ]; then
+        first=false
+      else
+        echo ","
+      fi
+
+      printf '    "%s": {\n' "$(json_escape "$container")"
+      echo "      \"exists\": ${exists},"
+      echo "      \"running\": ${running},"
+      echo "      \"docker_state\": \"$(json_escape "$state")\","
+      echo "      \"health\": \"$(json_escape "$health")\","
+      echo "      \"status\": \"$(json_escape "$status")\","
+      echo "      \"restart_count_in_window\": ${count},"
+      echo "      \"last_restart_epoch\": ${last},"
+      echo "      \"last_restart_at\": $(iso_time "$last"),"
+      echo "      \"cooldown_remaining_seconds\": ${cooldown_seconds},"
+      echo "      \"backoff_remaining_seconds\": ${backoff_seconds},"
+      echo "      \"last_health_output\": \"$(json_escape "$detail")\""
+      printf '    }'
+    done
+
+    echo ""
+    echo "  },"
+    echo "  \"summary\": {"
+    echo "    \"total\": ${total},"
+    echo "    \"ok\": ${ok},"
+    echo "    \"starting\": ${starting},"
+    echo "    \"unhealthy\": ${unhealthy},"
+    echo "    \"backoff\": ${backoff},"
+    echo "    \"stopped\": ${stopped},"
+    echo "    \"missing\": ${missing}"
+    echo "  }"
+    echo "}"
+  } > "$tmp_file"
+
+  mv "$tmp_file" "$STATUS_FILE"
+}
+
 check_container() {
   local container="$1"
   local status
@@ -283,16 +425,12 @@ check_container() {
     healthy)
       log "${container}: healthy"
       ;;
-
     starting)
       log "${container}: starting"
       ;;
-
     none)
-      # Contenedor sin HEALTHCHECK. Si esta running, lo consideramos OK.
       log "${container}: running sin healthcheck"
       ;;
-
     unhealthy)
       detail="$(health_detail "$container")"
       if [ -n "$detail" ]; then
@@ -301,11 +439,9 @@ check_container() {
         restart_container "$container" "healthcheck unhealthy"
       fi
       ;;
-
     missing)
       log "${container}: no se pudo inspeccionar"
       ;;
-
     *)
       restart_container "$container" "estado health inesperado: ${status}"
       ;;
@@ -334,11 +470,13 @@ log "cooldown normal por contenedor: ${RESTART_COOLDOWN}s"
 log "ventana de fallos: ${FAILURE_WINDOW}s"
 log "max reinicios por ventana: ${MAX_RESTARTS_IN_WINDOW}"
 log "cooldown largo/backoff: ${LONG_COOLDOWN}s"
+log "status json: ${STATUS_FILE}"
 
 while true; do
   for container in "${CONTAINERS[@]}"; do
     check_container "$container"
   done
 
+  write_status_json
   sleep "$CHECK_INTERVAL"
 done
