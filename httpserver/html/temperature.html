@@ -7,30 +7,158 @@
   <link rel="stylesheet" href="common.css">
   <title>Bird Recorder — Sensores</title>
   <style>
-    .controls{ display:grid; grid-template-columns:1fr; gap:18px; margin-bottom:24px; }
-    .control-card{ background:rgba(0,0,0,0.25); border:1px solid var(--card-border); border-radius:16px; padding:18px; }
-    .control-label{ display:block; color:var(--muted); font-size:13px; margin-bottom:10px; }
-    .metric-toggle,.quick-actions{ display:flex; flex-wrap:wrap; gap:10px; }
-    .metric-btn,.range-btn,.apply-btn{ border:none; border-radius:999px; background:rgba(255,255,255,0.08); color:var(--text); padding:9px 13px; cursor:pointer; }
-    .metric-btn.active,.range-btn.active,#btn-realtime.active{ background:var(--accent); color:white; font-weight:bold; }
-    .range-grid{ display:grid; grid-template-columns:1fr auto; gap:16px; align-items:end; }
-    input[type="range"]{ width:100%; padding:0; }
-    .exact-range{ display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; margin-top:14px; }
-    .date-field{ display:flex; flex-direction:column; gap:6px; }
-    .date-field label{ color:var(--muted); font-size:13px; }
-    .temp-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:18px; }
-    .temp-big{ display:flex; align-items:baseline; gap:8px; }
-    .temp-value{ font-size:56px; font-weight:bold; }
-    .temp-unit{ color:var(--muted); font-size:22px; }
-    .chart-wrap{ position:relative; }
-    .chart-container{ height:280px; margin-top:8px; }
-    .stats-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:22px; }
-    .stat{ padding:16px; border-radius:14px; background:rgba(255,255,255,0.05); text-align:center; }
-    .stat .label{ font-size:12px; color:var(--muted); margin-bottom:6px; }
-    .stat .value{ font-size:26px; font-weight:bold; }
-    .loading-overlay{ display:none; position:absolute; inset:0; background:rgba(0,0,0,0.4); border-radius:16px; align-items:center; justify-content:center; color:var(--muted); }
-    .loading-overlay.visible{ display:flex; }
-    @media(max-width:700px){ .temp-header{ flex-direction:column; } .range-grid,.exact-range,.stats-grid{ grid-template-columns:1fr; } .temp-value{ font-size:42px; } }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .control-card {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .control-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .metric-toggle,
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .metric-btn,
+    .range-btn,
+    .apply-btn {
+      border: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      padding: 9px 13px;
+      cursor: pointer;
+    }
+    .metric-btn.active,
+    .range-btn.active,
+    #btn-realtime.active {
+      background: var(--accent);
+      color: white;
+      font-weight: bold;
+    }
+    .metric-btn:disabled,
+    .range-btn:disabled,
+    .apply-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .range-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+    input[type="range"] {
+      width: 100%;
+      padding: 0;
+    }
+    .exact-range {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-top: 14px;
+    }
+    .date-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .date-field label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .temp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+    .temp-big {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .temp-value {
+      font-size: 56px;
+      font-weight: bold;
+    }
+    .temp-unit {
+      color: var(--muted);
+      font-size: 22px;
+    }
+    .chart-wrap {
+      position: relative;
+    }
+    .chart-container {
+      height: 320px;
+      margin-top: 8px;
+    }
+    #sensorChart {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+    }
+    .stat {
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      text-align: center;
+    }
+    .stat .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat .value {
+      font-size: 26px;
+      font-weight: bold;
+    }
+    .loading-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+    }
+    .loading-overlay.visible {
+      display: flex;
+    }
+    @media (max-width: 700px) {
+      .temp-header {
+        flex-direction: column;
+      }
+      .range-grid,
+      .exact-range,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .temp-value {
+        font-size: 42px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -58,7 +186,10 @@
     <div class="control-card">
       <span class="control-label">Rango temporal rápido</span>
       <div class="range-grid">
-        <div><input id="hours-slider" type="range" min="1" max="168" value="1" oninput="previewSliderRange()"><div class="small" id="slider-label">Últimas 1 h</div></div>
+        <div>
+          <input id="hours-slider" type="range" min="1" max="168" value="1" oninput="previewSliderRange()" onchange="applySliderRange()">
+          <div class="small" id="slider-label">Últimas 1 h</div>
+        </div>
         <div class="quick-actions">
           <button class="range-btn active" id="btn-realtime" onclick="setRealtimeMode()">Tiempo real</button>
           <button class="range-btn" data-hours="1" onclick="setQuickRange(1)">1 h</button>
@@ -69,8 +200,14 @@
         </div>
       </div>
       <div class="exact-range">
-        <div class="date-field"><label>Inicio exacto</label><input type="datetime-local" id="date-from"></div>
-        <div class="date-field"><label>Fin exacto <span style="opacity:0.5">(vacío = ahora)</span></label><input type="datetime-local" id="date-to"></div>
+        <div class="date-field">
+          <label>Inicio exacto</label>
+          <input type="datetime-local" id="date-from">
+        </div>
+        <div class="date-field">
+          <label>Fin exacto <span style="opacity:0.5">(vacío = ahora)</span></label>
+          <input type="datetime-local" id="date-to">
+        </div>
         <button class="apply-btn" onclick="loadHistoryFromInputs()">Aplicar rango exacto</button>
       </div>
     </div>
@@ -78,46 +215,689 @@
 
   <section class="card">
     <div class="temp-header">
-      <div><h2 id="sensor-title">Temperatura interna</h2><p class="subtitle" id="sensor-status">Cargando histórico…</p></div>
-      <div><div class="temp-big"><span class="temp-value" id="sensor-value">--</span><span class="temp-unit" id="sensor-unit">°C</span></div><div class="small" id="last-update">actualizando…</div></div>
+      <div>
+        <h2 id="sensor-title">Temperatura interna</h2>
+        <p class="subtitle" id="sensor-status">Cargando histórico…</p>
+      </div>
+      <div>
+        <div class="temp-big">
+          <span class="temp-value" id="sensor-value">--</span>
+          <span class="temp-unit" id="sensor-unit">°C</span>
+        </div>
+        <div class="small" id="last-update">actualizando…</div>
+      </div>
     </div>
-    <div class="chart-wrap"><div class="chart-container"><canvas id="sensorChart"></canvas></div><div class="loading-overlay" id="loading">Cargando datos…</div></div>
-    <div class="stats-grid"><div class="stat"><div class="label">Mínima</div><div class="value" id="stat-min">--</div></div><div class="stat"><div class="label">Máxima</div><div class="value" id="stat-max">--</div></div><div class="stat"><div class="label">Media</div><div class="value" id="stat-avg">--</div></div></div>
+    <div class="chart-wrap">
+      <div class="chart-container">
+        <canvas id="sensorChart"></canvas>
+      </div>
+      <div class="loading-overlay" id="loading">Cargando datos…</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="label">Mínima</div>
+        <div class="value" id="stat-min">--</div>
+      </div>
+      <div class="stat">
+        <div class="label">Máxima</div>
+        <div class="value" id="stat-max">--</div>
+      </div>
+      <div class="stat">
+        <div class="label">Media</div>
+        <div class="value" id="stat-avg">--</div>
+      </div>
+    </div>
   </section>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <script>
-(function(){ var hasCookie = document.cookie.split(';').some(function(c){ return c.trim().startsWith('birdsession='); }); if (!hasCookie) window.location.href = '/login.html'; })();
-const METRICS = { internal_temp:{label:'Temperatura interna', unit:'°C'}, external_temp:{label:'Temperatura externa', unit:'°C'}, humidity:{label:'Humedad', unit:'%'} };
-let currentMetric = 'internal_temp', currentMode = 'realtime', realtimeEntries = [], lastRealtimeTimestamp = null;
-const MAX_REALTIME_POINTS = 40;
-const labels = [], values = [];
-const ctx = document.getElementById('sensorChart').getContext('2d');
-const chart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:METRICS[currentMetric].label, data:values, borderWidth:2, pointRadius:2, pointHoverRadius:5, tension:0.3, fill:false }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#e8f5e9' } } }, scales:{ x:{ ticks:{ color:'#b7d6b8' }, grid:{ color:'rgba(255,255,255,0.08)' } }, y:{ ticks:{ color:'#b7d6b8', callback:v => v + METRICS[currentMetric].unit }, grid:{ color:'rgba(255,255,255,0.08)' } } } } });
-function setLoading(v){ document.getElementById('loading').classList.toggle('visible', !!v); }
-function toDatetimeLocal(d){ const pad=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
-function formatLocalDateTime(d){ const pad=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
-function formatLabel(ts){ const d = new Date(ts); return isNaN(d) ? ts : d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
-function setDateInputs(fromDate, toDate){ document.getElementById('date-from').value = toDatetimeLocal(fromDate); document.getElementById('date-to').value = toDate ? toDatetimeLocal(toDate) : ''; }
-function resetStats(){ ['stat-min','stat-max','stat-avg'].forEach(id => document.getElementById(id).textContent='--'); }
-function updateHeader(value, timestamp){ const cfg = METRICS[currentMetric]; document.getElementById('sensor-title').textContent = cfg.label; document.getElementById('sensor-unit').textContent = cfg.unit; document.getElementById('sensor-value').textContent = value === null || value === undefined || Number.isNaN(Number(value)) ? '--' : Number(value).toFixed(1); document.getElementById('last-update').textContent = timestamp ? new Date(timestamp).toLocaleString('es-ES') : 'sin datos'; }
-function updateStats(vals){ if(!vals.length){ resetStats(); return; } const min=Math.min(...vals), max=Math.max(...vals), avg=vals.reduce((a,b)=>a+b,0)/vals.length, u=METRICS[currentMetric].unit; document.getElementById('stat-min').textContent=min.toFixed(1)+u; document.getElementById('stat-max').textContent=max.toFixed(1)+u; document.getElementById('stat-avg').textContent=avg.toFixed(1)+u; chart.options.scales.y.ticks.callback = v => v + u; }
-function clearChart(){ labels.length = 0; values.length = 0; }
-function renderEntries(entries){ clearChart(); const valid=[]; entries.forEach(e => { const v = e[currentMetric]; if(v === null || v === undefined || Number.isNaN(Number(v))) return; labels.push(formatLabel(e.timestamp)); values.push(Number(v)); valid.push({ timestamp:e.timestamp, value:Number(v) }); }); if(!valid.length){ chart.update(); updateHeader(null,null); resetStats(); document.getElementById('sensor-status').textContent = currentMode === 'realtime' ? 'Sin datos en tiempo real' : 'Sin datos en ese rango'; return; } const last=valid[valid.length-1]; updateHeader(last.value,last.timestamp); updateStats(values); chart.data.datasets[0].label = METRICS[currentMetric].label; chart.update(); document.getElementById('sensor-status').textContent = `${valid.length} lecturas · ${currentMode === 'realtime' ? 'tiempo real' : METRICS[currentMetric].label}`; }
-function loadHistory(fromDate,toDate,silent=false){ currentMode='quick'; const from=encodeURIComponent(formatLocalDateTime(fromDate)); const to=encodeURIComponent(formatLocalDateTime(toDate || new Date())); if(!silent){ setLoading(true); document.getElementById('sensor-status').textContent='Cargando histórico…'; } fetch(`/sensors/history?from=${from}&to=${to}`).then(r=>r.json()).then(data=>{ setLoading(false); if(data.error){ document.getElementById('sensor-status').textContent=data.error; return; } renderEntries(data.entries || []); }).catch(()=>{ setLoading(false); document.getElementById('sensor-status').textContent='Error al cargar histórico'; }); }
-function fetchRealtime(silent=false){ currentMode='realtime'; if(!silent){ setLoading(true); document.getElementById('sensor-status').textContent='Leyendo tiempo real…'; } fetch('/sensors/latest').then(r=>r.json()).then(data=>{ setLoading(false); if(data.error){ document.getElementById('sensor-status').textContent=data.error; return; } if(data.timestamp && data.timestamp !== lastRealtimeTimestamp){ realtimeEntries.push(data); lastRealtimeTimestamp = data.timestamp; if(realtimeEntries.length > MAX_REALTIME_POINTS) realtimeEntries.shift(); } setDateInputs(new Date(), null); renderEntries(realtimeEntries); }).catch(()=>{ setLoading(false); document.getElementById('sensor-status').textContent='Error al leer sensores'; }); }
-function updateSliderLabel(){ const hours=Number(document.getElementById('hours-slider').value); document.getElementById('slider-label').textContent = hours < 24 ? `Últimas ${hours} h` : `Últimos ${Math.round(hours/24)} días`; }
-function getRangeFromSlider(){ const hours=Number(document.getElementById('hours-slider').value); const to=new Date(); const from=new Date(to.getTime()-hours*60*60*1000); return {from,to,hours}; }
-function previewSliderRange(){ updateSliderLabel(); const r=getRangeFromSlider(); setDateInputs(r.from,null); }
-function setActiveRangeButton(hours){ document.getElementById('btn-realtime').classList.remove('active'); document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.hours) === hours)); }
-function applySliderRange(){ const r=getRangeFromSlider(); setActiveRangeButton(r.hours); setDateInputs(r.from,null); loadHistory(r.from,r.to); }
-function setQuickRange(hours){ document.getElementById('hours-slider').value=hours; updateSliderLabel(); applySliderRange(); }
-function setRealtimeMode(){ currentMode='realtime'; document.getElementById('btn-realtime').classList.add('active'); document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.remove('active')); realtimeEntries=[]; lastRealtimeTimestamp=null; clearChart(); chart.update(); resetStats(); fetchRealtime(); }
-function loadHistoryFromInputs(){ const fromVal=document.getElementById('date-from').value; const toVal=document.getElementById('date-to').value; if(!fromVal){ document.getElementById('sensor-status').textContent='Indica una fecha de inicio'; return; } document.getElementById('btn-realtime').classList.remove('active'); document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.remove('active')); loadHistory(new Date(fromVal), toVal ? new Date(toVal) : new Date()); }
-function setMetric(metric){ currentMetric=metric; document.querySelectorAll('.metric-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.metric === metric)); updateHeader(values.length ? values[values.length-1] : null, null); if(currentMode === 'realtime') renderEntries(realtimeEntries); else loadHistoryFromInputs(); }
+(function () {
+  var hasCookie = document.cookie.split(';').some(function (c) {
+    return c.trim().startsWith('birdsession=');
+  });
+  if (!hasCookie) window.location.href = '/login.html';
+})();
+
+const METRICS = {
+  internal_temp: { label: 'Temperatura interna', unit: '°C' },
+  external_temp: { label: 'Temperatura externa', unit: '°C' },
+  humidity: { label: 'Humedad', unit: '%' }
+};
+const MAX_REALTIME_POINTS = 240;
+const MAX_DRAW_POINTS = 900;
+const REALTIME_WINDOW_MS = 10 * 60 * 1000;
+const REALTIME_TICK_STEP_MINUTES = 1;
+const REALTIME_STALE_TOLERANCE_MS = 90 * 1000;
+
+let currentMetric = 'internal_temp';
+let currentMode = 'realtime';
+let currentEntries = [];
+let currentRangeStart = null;
+let currentRangeEnd = null;
+let realtimeEntries = [];
+let realtimeStartDate = null;
+let lastRealtimeTimestamp = null;
+let redrawQueued = false;
+
+const canvas = document.getElementById('sensorChart');
+const ctx = canvas.getContext('2d');
+
+function setLoading(v) {
+  document.getElementById('loading').classList.toggle('visible', !!v);
+}
+
+function setControlsDisabled(disabled) {
+  document.querySelectorAll('.metric-btn,.range-btn,.apply-btn,#hours-slider,#date-from,#date-to').forEach(el => {
+    el.disabled = !!disabled;
+  });
+}
+
+function resetStats() {
+  ['stat-min', 'stat-max', 'stat-avg'].forEach(id => {
+    document.getElementById(id).textContent = '--';
+  });
+}
+
+function clearChart() {
+  currentEntries = [];
+  drawChart([], 'Sin datos para mostrar');
+}
+
+function toDatetimeLocal(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function formatLocalDateTime(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+function setDateInputs(fromDate, toDate) {
+  document.getElementById('date-from').value = toDatetimeLocal(fromDate);
+  document.getElementById('date-to').value = toDate ? toDatetimeLocal(toDate) : '';
+}
+
+function parseTimestamp(ts) {
+  if (!ts) return null;
+  if (ts instanceof Date) return isNaN(ts) ? null : ts;
+  const text = String(ts).trim();
+  let d = new Date(text.replace(' ', 'T'));
+  if (!isNaN(d)) return d;
+  const m = text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]), Number(m[6] || 0));
+  return isNaN(d) ? null : d;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function startOfHour(d) { const x = new Date(d); x.setMinutes(0, 0, 0); return x; }
+function ceilHour(d) { const x = startOfHour(d); if (x.getTime() < d.getTime()) x.setHours(x.getHours() + 1); return x; }
+function floorToMinutes(d, step) { const x = new Date(d); x.setSeconds(0, 0); x.setMinutes(Math.floor(x.getMinutes() / step) * step); return x; }
+function ceilToMinutes(d, step) { const x = floorToMinutes(d, step); if (x.getTime() < d.getTime()) x.setMinutes(x.getMinutes() + step); return x; }
+function addMinutes(d, minutes) { const x = new Date(d); x.setMinutes(x.getMinutes() + minutes); return x; }
+function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function addHours(d, h) { const x = new Date(d); x.setHours(x.getHours() + h); return x; }
+function addDays(d, days) { const x = new Date(d); x.setDate(x.getDate() + days); return x; }
+
+function setVisibleRange(fromDate, toDate) {
+  currentRangeStart = fromDate ? new Date(fromDate) : null;
+  currentRangeEnd = toDate ? new Date(toDate) : null;
+}
+
+function formatTickDay(d) { return d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''); }
+function formatTickDate(d) { return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1); }
+function formatTickHour(d) { return pad2(d.getHours()) + ':00'; }
+function formatTickMinute(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+
+function getRealtimeMinuteStep(spanMinutes) {
+  if (spanMinutes <= 30) return 5;
+  if (spanMinutes <= 90) return 10;
+  if (spanMinutes <= 240) return 15;
+  return 30;
+}
+
+function getRealtimeAxisEnd(entries) {
+  const now = new Date();
+  const normalized = normalizeEntries(entries || realtimeEntries);
+  const last = normalized.length ? normalized[normalized.length - 1] : null;
+
+  if (last && now.getTime() - last.date.getTime() > REALTIME_WINDOW_MS + REALTIME_STALE_TOLERANCE_MS) {
+    return new Date(last.date);
+  }
+
+  return now;
+}
+
+function getRealtimeWindow(entries) {
+  const end = getRealtimeAxisEnd(entries);
+  return {
+    start: new Date(end.getTime() - REALTIME_WINDOW_MS),
+    end: end
+  };
+}
+
+function pruneRealtimeEntries(entries) {
+  const normalized = normalizeEntries(entries);
+  if (!normalized.length) return [];
+
+  const realtimeWindow = getRealtimeWindow(normalized);
+  const cutoff = realtimeWindow.start.getTime() - REALTIME_STALE_TOLERANCE_MS;
+  const limit = realtimeWindow.end.getTime() + 1000;
+
+  return normalized
+    .filter(e => e.date.getTime() >= cutoff && e.date.getTime() <= limit)
+    .slice(-MAX_REALTIME_POINTS);
+}
+
+function isRealtimeFallback(points) {
+  if (currentMode !== 'realtime' || !points.length) return false;
+  const last = points[points.length - 1];
+  return Date.now() - last.date.getTime() > REALTIME_WINDOW_MS + REALTIME_STALE_TOLERANCE_MS;
+}
+
+function getAxisSpec(points) {
+  const first = points[0] ? points[0].date : null;
+  const last = points.length ? points[points.length - 1].date : null;
+  let rawStart = currentRangeStart || first || new Date();
+  let rawEnd = currentRangeEnd || last || new Date();
+
+  if (currentMode === 'realtime') {
+    const realtimeWindow = getRealtimeWindow();
+    rawStart = realtimeWindow.start;
+    rawEnd = realtimeWindow.end;
+  }
+
+  const rangeStart = rawStart <= rawEnd ? rawStart : rawEnd;
+  const rangeEnd = rawStart <= rawEnd ? rawEnd : rawStart;
+  const spanHours = Math.max(1 / 60, (rangeEnd.getTime() - rangeStart.getTime()) / 3600000);
+  const ticks = [];
+  let minDate, maxDate, mode;
+
+  if (spanHours > 48) {
+    mode = 'daily';
+    minDate = startOfDay(rangeStart);
+    maxDate = addDays(startOfDay(rangeEnd), 1);
+    for (let t = new Date(minDate); t <= maxDate; t = addDays(t, 1)) ticks.push(new Date(t));
+  } else if (currentMode === 'realtime') {
+    mode = 'minute';
+    const step = REALTIME_TICK_STEP_MINUTES;
+    minDate = floorToMinutes(rangeStart, step);
+    maxDate = ceilToMinutes(rangeEnd, step);
+    if (maxDate.getTime() <= minDate.getTime()) maxDate = addMinutes(minDate, step);
+    for (let t = new Date(minDate); t <= maxDate; t = addMinutes(t, step)) ticks.push(new Date(t));
+  } else {
+    mode = 'hourly';
+    minDate = startOfHour(rangeStart);
+    maxDate = ceilHour(rangeEnd);
+    if (maxDate.getTime() <= minDate.getTime()) maxDate = addHours(minDate, 1);
+    for (let t = new Date(minDate); t <= maxDate; t = addHours(t, 1)) ticks.push(new Date(t));
+  }
+
+  return { mode, minDate, maxDate, ticks };
+}
+
+function formatLastUpdate(ts) {
+  const d = parseTimestamp(ts);
+  return d ? d.toLocaleString('es-ES') : 'sin datos';
+}
+
+function normalizeNumber(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeEntries(entries) {
+  return (entries || []).map(e => ({
+    timestamp: e.timestamp,
+    date: parseTimestamp(e.timestamp),
+    internal_temp: normalizeNumber(e.internal_temp),
+    external_temp: normalizeNumber(e.external_temp),
+    humidity: normalizeNumber(e.humidity)
+  })).filter(e => e.date).sort((a, b) => a.date - b.date);
+}
+
+function getMetricPoints(entries) {
+  return normalizeEntries(entries)
+    .map(e => ({ entry: e, date: e.date, value: e[currentMetric] }))
+    .filter(p => p.value !== null);
+}
+
+function downsample(points, maxPoints) {
+  if (points.length <= maxPoints) return points;
+  const step = Math.ceil(points.length / maxPoints);
+  const out = [];
+  for (let i = 0; i < points.length; i += step) out.push(points[i]);
+  const last = points[points.length - 1];
+  if (out[out.length - 1] !== last) out.push(last);
+  return out;
+}
+
+function niceRange(min, max) {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return { min: 0, max: 1 };
+  if (min === max) {
+    const pad = Math.max(1, Math.abs(min) * 0.05);
+    return { min: min - pad, max: max + pad };
+  }
+  const pad = (max - min) * 0.12;
+  return { min: min - pad, max: max + pad };
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  const width = Math.max(1, Math.floor(rect.width * ratio));
+  const height = Math.max(1, Math.floor(rect.height * ratio));
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+function queueDraw() {
+  if (redrawQueued) return;
+  redrawQueued = true;
+  requestAnimationFrame(() => {
+    redrawQueued = false;
+    renderEntries(currentEntries, true);
+  });
+}
+
+function drawChart(points, emptyText) {
+  resizeCanvas();
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const styles = getComputedStyle(document.documentElement);
+  const textColor = (styles.getPropertyValue('--text') || '#e8f5e9').trim();
+  const mutedColor = (styles.getPropertyValue('--muted') || '#b7d6b8').trim();
+  const accentColor = (styles.getPropertyValue('--accent') || '#4bb84f').trim();
+  const gridColor = 'rgba(255,255,255,0.08)';
+  const axisColor = 'rgba(255,255,255,0.20)';
+
+  ctx.font = '12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textBaseline = 'middle';
+
+  if (!points.length) {
+    ctx.fillStyle = mutedColor;
+    ctx.textAlign = 'center';
+    ctx.fillText(emptyText || 'Sin datos para mostrar', w / 2, h / 2);
+    return;
+  }
+
+  const axis = getAxisSpec(points);
+  const bottom = axis.mode === 'daily' ? 58 : 64;
+  const left = 52;
+  const right = 18;
+  const top = 16;
+  const pw = Math.max(1, w - left - right);
+  const ph = Math.max(1, h - top - bottom);
+  const minTime = axis.minDate.getTime();
+  const maxTime = axis.maxDate.getTime();
+  const visiblePoints = points.filter(p => p.date.getTime() >= minTime && p.date.getTime() <= maxTime);
+
+  if (!visiblePoints.length) {
+    ctx.fillStyle = mutedColor;
+    ctx.textAlign = 'center';
+    ctx.fillText(emptyText || 'Sin datos visibles en este rango', w / 2, h / 2);
+    return;
+  }
+
+  const drawPoints = downsample(visiblePoints, MAX_DRAW_POINTS);
+  const values = visiblePoints.map(p => p.value);
+  const yr = niceRange(Math.min(...values), Math.max(...values));
+  const unit = METRICS[currentMetric].unit;
+  const xOf = p => left + ((p.date.getTime() - minTime) / Math.max(1, maxTime - minTime)) * pw;
+  const yOf = v => top + (1 - ((v - yr.min) / Math.max(0.0001, yr.max - yr.min))) * ph;
+
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 1;
+  ctx.fillStyle = mutedColor;
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const y = top + (ph / 4) * i;
+    const v = yr.max - ((yr.max - yr.min) / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(left + pw, y);
+    ctx.stroke();
+    ctx.fillText(v.toFixed(1) + unit, left - 8, y);
+  }
+
+  axis.ticks.forEach(tick => {
+    const x = left + ((tick.getTime() - minTime) / Math.max(1, maxTime - minTime)) * pw;
+    if (x < left - 0.5 || x > left + pw + 0.5) return;
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, top + ph);
+    ctx.stroke();
+  });
+
+  ctx.strokeStyle = axisColor;
+  ctx.beginPath();
+  ctx.moveTo(left, top);
+  ctx.lineTo(left, top + ph);
+  ctx.lineTo(left + pw, top + ph);
+  ctx.stroke();
+
+  ctx.fillStyle = mutedColor;
+  axis.ticks.forEach(tick => {
+    const x = left + ((tick.getTime() - minTime) / Math.max(1, maxTime - minTime)) * pw;
+    if (x < left - 0.5 || x > left + pw + 0.5) return;
+    if (axis.mode === 'daily') {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(formatTickDay(tick), x, top + ph + 11);
+      ctx.fillText(formatTickDate(tick), x, top + ph + 29);
+    } else {
+      const label = axis.mode === 'minute' ? formatTickMinute(tick) : formatTickHour(tick);
+      ctx.save();
+      ctx.translate(x, top + ph + 14);
+      ctx.rotate(-Math.PI / 4);
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    }
+  });
+  ctx.textBaseline = 'middle';
+
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2.25;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  drawPoints.forEach((p, i) => {
+    const x = xOf(p);
+    const y = yOf(p.value);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  drawPoints.forEach(p => {
+    const x = xOf(p);
+    const y = yOf(p.value);
+    ctx.fillStyle = accentColor;
+    ctx.beginPath();
+    ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  const last = drawPoints[drawPoints.length - 1];
+  ctx.fillStyle = accentColor;
+  ctx.beginPath();
+  ctx.arc(xOf(last), yOf(last.value), 3.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'left';
+  ctx.fillText(METRICS[currentMetric].label, left, top + 2);
+}
+
+function updateHeader(value, timestamp) {
+  const cfg = METRICS[currentMetric];
+  document.getElementById('sensor-title').textContent = cfg.label;
+  document.getElementById('sensor-unit').textContent = cfg.unit;
+  document.getElementById('sensor-value').textContent =
+    value === null || value === undefined || Number.isNaN(Number(value)) ? '--' : Number(value).toFixed(1);
+  document.getElementById('last-update').textContent = timestamp ? formatLastUpdate(timestamp) : 'sin datos';
+}
+
+function updateStats(vals) {
+  if (!vals.length) {
+    resetStats();
+    return;
+  }
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const u = METRICS[currentMetric].unit;
+  document.getElementById('stat-min').textContent = min.toFixed(1) + u;
+  document.getElementById('stat-max').textContent = max.toFixed(1) + u;
+  document.getElementById('stat-avg').textContent = avg.toFixed(1) + u;
+}
+
+function renderEntries(entries, keepStatus) {
+  currentEntries = normalizeEntries(entries);
+  const points = getMetricPoints(currentEntries);
+
+  if (!points.length) {
+    drawChart([], currentMode === 'realtime' ? 'Sin datos en tiempo real' : 'Sin datos en ese rango');
+    updateHeader(null, null);
+    resetStats();
+    if (!keepStatus) {
+      document.getElementById('sensor-status').textContent =
+        currentMode === 'realtime' ? 'Sin datos en tiempo real' : 'Sin datos en ese rango';
+    }
+    return;
+  }
+
+  const last = points[points.length - 1];
+  updateHeader(last.value, last.entry.timestamp);
+  updateStats(points.map(p => p.value));
+  drawChart(points);
+
+  if (!keepStatus) {
+    if (currentMode === 'realtime' && isRealtimeFallback(points)) {
+      document.getElementById('sensor-status').textContent =
+        `${points.length} lecturas · mostrando última lectura disponible (${formatLastUpdate(last.entry.timestamp)}) · esperando datos nuevos`;
+    } else {
+      const modeText = currentMode === 'realtime'
+        ? 'tiempo real · últimos 10 min'
+        : 'histórico';
+      document.getElementById('sensor-status').textContent = `${points.length} lecturas · ${modeText}`;
+    }
+  }
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return await res.json();
+}
+
+async function fetchHistory(fromDate, toDate) {
+  const from = encodeURIComponent(formatLocalDateTime(fromDate));
+  const to = encodeURIComponent(formatLocalDateTime(toDate || new Date()));
+  const data = await fetchJson(`/sensors/history?from=${from}&to=${to}`);
+  if (data.error) throw new Error(data.error);
+  return data.entries || [];
+}
+
+async function loadHistory(fromDate, toDate, silent = false) {
+  currentMode = 'quick';
+  setVisibleRange(fromDate, toDate || new Date());
+  if (!silent) {
+    setLoading(true);
+    setControlsDisabled(true);
+    document.getElementById('sensor-status').textContent = 'Cargando histórico…';
+  }
+  try {
+    const entries = await fetchHistory(fromDate, toDate || new Date());
+    renderEntries(entries);
+  } catch (err) {
+    document.getElementById('sensor-status').textContent = err.message || 'Error al cargar histórico';
+    drawChart([], 'Error al cargar histórico');
+  } finally {
+    if (!silent) {
+      setLoading(false);
+      setControlsDisabled(false);
+    }
+  }
+}
+
+async function seedRealtimeHistory() {
+  const to = new Date();
+  const ranges = [1, 6, 24, 72, 168];
+  let lastError = null;
+  for (const h of ranges) {
+    const from = new Date(to.getTime() - h * 60 * 60 * 1000);
+    try {
+      const entries = normalizeEntries(await fetchHistory(from, to)).slice(-MAX_REALTIME_POINTS);
+      if (entries.length) {
+        setVisibleRange(null, null);
+        setDateInputs(entries[0].date, null);
+        return entries;
+      }
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  setVisibleRange(null, null);
+  setDateInputs(new Date(to.getTime() - 60 * 60 * 1000), null);
+  if (lastError) throw lastError;
+  return [];
+}
+
+async function fetchRealtime(silent = false) {
+  currentMode = 'realtime';
+  setVisibleRange(null, null);
+  if (!silent) {
+    setLoading(true);
+    document.getElementById('sensor-status').textContent = 'Leyendo tiempo real…';
+  }
+  try {
+    const data = await fetchJson('/sensors/latest');
+    if (data.error) throw new Error(data.error);
+
+    if (data.timestamp && data.timestamp !== lastRealtimeTimestamp) {
+      realtimeEntries.push(data);
+      lastRealtimeTimestamp = data.timestamp;
+    }
+
+    realtimeEntries = pruneRealtimeEntries(realtimeEntries);
+
+    if (realtimeEntries.length) {
+      renderEntries(realtimeEntries);
+    } else {
+      updateHeader(normalizeNumber(data[currentMetric]), data.timestamp);
+      resetStats();
+      drawChart([], 'Sin datos en tiempo real');
+      document.getElementById('sensor-status').textContent = data.timestamp
+        ? `Última lectura sin valor para ${METRICS[currentMetric].label}: ${formatLastUpdate(data.timestamp)}`
+        : 'Sin datos en tiempo real';
+    }
+  } catch (err) {
+    document.getElementById('sensor-status').textContent = err.message || 'Error al leer sensores';
+  } finally {
+    if (!silent) setLoading(false);
+  }
+}
+
+function updateSliderLabel() {
+  const hours = Number(document.getElementById('hours-slider').value);
+  document.getElementById('slider-label').textContent =
+    hours < 24 ? `Últimas ${hours} h` : `Últimos ${Math.round(hours / 24)} días`;
+}
+
+function updateRealtimeLabel() {
+  document.getElementById('slider-label').textContent = 'Tiempo real · últimos 10 min';
+}
+
+function getRangeFromSlider() {
+  const hours = Number(document.getElementById('hours-slider').value);
+  const to = new Date();
+  const from = new Date(to.getTime() - hours * 60 * 60 * 1000);
+  return { from, to, hours };
+}
+
+function previewSliderRange() {
+  updateSliderLabel();
+  const r = getRangeFromSlider();
+  setDateInputs(r.from, null);
+}
+
+function setActiveRangeButton(hours) {
+  document.getElementById('btn-realtime').classList.remove('active');
+  document.querySelectorAll('.range-btn[data-hours]').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.hours) === hours);
+  });
+}
+
+function applySliderRange() {
+  const r = getRangeFromSlider();
+  setActiveRangeButton(r.hours);
+  setDateInputs(r.from, null);
+  loadHistory(r.from, r.to);
+}
+
+function setQuickRange(hours) {
+  document.getElementById('hours-slider').value = hours;
+  updateSliderLabel();
+  applySliderRange();
+}
+
+async function setRealtimeMode() {
+  currentMode = 'realtime';
+  const now = new Date();
+  realtimeStartDate = new Date(now.getTime() - REALTIME_WINDOW_MS);
+  realtimeEntries = [];
+  currentEntries = [];
+  lastRealtimeTimestamp = null;
+  setVisibleRange(null, null);
+  setDateInputs(realtimeStartDate, null);
+  document.getElementById('btn-realtime').classList.add('active');
+  document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('hours-slider').value = 1;
+  updateRealtimeLabel();
+  updateHeader(null, null);
+  resetStats();
+  drawChart([], 'Cargando últimos 10 minutos…');
+  setLoading(true);
+  setControlsDisabled(true);
+  document.getElementById('sensor-status').textContent = 'Tiempo real · cargando últimos 10 minutos…';
+
+  try {
+    const historyEntries = normalizeEntries(await fetchHistory(realtimeStartDate, now));
+    realtimeEntries = pruneRealtimeEntries(historyEntries);
+    if (realtimeEntries.length) {
+      lastRealtimeTimestamp = realtimeEntries[realtimeEntries.length - 1].timestamp;
+    }
+    renderEntries(realtimeEntries);
+    await fetchRealtime(true);
+  } catch (err) {
+    document.getElementById('sensor-status').textContent = 'No se pudo cargar histórico reciente; intentando última lectura…';
+    await fetchRealtime(true);
+  } finally {
+    updateRealtimeLabel();
+    setLoading(false);
+    setControlsDisabled(false);
+  }
+}
+
+function loadHistoryFromInputs() {
+  const fromVal = document.getElementById('date-from').value;
+  const toVal = document.getElementById('date-to').value;
+  if (!fromVal) {
+    document.getElementById('sensor-status').textContent = 'Indica una fecha de inicio';
+    return;
+  }
+  document.getElementById('btn-realtime').classList.remove('active');
+  document.querySelectorAll('.range-btn[data-hours]').forEach(btn => btn.classList.remove('active'));
+  loadHistory(new Date(fromVal), toVal ? new Date(toVal) : new Date());
+}
+
+function setMetric(metric) {
+  currentMetric = metric;
+  document.querySelectorAll('.metric-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.metric === metric);
+  });
+  renderEntries(currentEntries);
+}
+
 previewSliderRange();
+drawChart([], 'Cargando datos…');
 setRealtimeMode();
-setInterval(function(){ if(currentMode === 'realtime') fetchRealtime(true); }, 5000);
+setInterval(function () {
+  if (currentMode === 'realtime') fetchRealtime(true);
+}, 5000);
+if (window.ResizeObserver) new ResizeObserver(queueDraw).observe(canvas.parentElement);
+window.addEventListener('resize', queueDraw);
 </script>
 </body>
 </html>
+  

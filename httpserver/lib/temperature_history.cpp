@@ -76,9 +76,16 @@ static std::string jsonEscape(const std::string& s) {
 
 static std::vector<std::string> splitCsvLine(const std::string& line) {
     std::vector<std::string> parts;
-    std::string part;
-    std::stringstream ss(line);
-    while (std::getline(ss, part, ',')) parts.push_back(part);
+    size_t start = 0;
+    while (start <= line.size()) {
+        size_t pos = line.find(',', start);
+        if (pos == std::string::npos) {
+            parts.push_back(line.substr(start));
+            break;
+        }
+        parts.push_back(line.substr(start, pos - start));
+        start = pos + 1;
+    }
     return parts;
 }
 
