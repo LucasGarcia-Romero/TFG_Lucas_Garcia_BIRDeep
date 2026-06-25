@@ -123,7 +123,7 @@ int main(void)
 		printf("0x%x 0x%x 0x%x 0x%x 0x%x\n",data[0],data[1],data[2],data[3],data[4]);
 
 		checksum = (data[0] + data[1] + data[2] + data[3]) & 0xFF;
-			// If Check-sum data is correct (NOT 0x00), display humidity and temperature
+		// If Check-sum data is correct (NOT 0x00), display humidity and temperature
 		correct=( data[4] == checksum && checksum != 0x00);
 		if (correct)
 		{
