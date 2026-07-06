@@ -61,7 +61,7 @@
    <div class="stat"><div class="label">Usado</div><div class="value" id="used-bytes">--</div></div>
    <div class="stat"><div class="label">Disponible</div><div class="value" id="available-bytes">--</div></div>
    <div class="stat"><div class="label">Audios WAV</div><div class="value" id="wav-count">--</div></div>
-   <div class="stat"><div class="label">Spectrogramas</div><div class="value" id="spectrogram-count">--</div></div>
+   <div class="stat"><div class="label">Espectrogramas</div><div class="value" id="spectrogram-count">--</div></div>
   </div>
   <div class="small" id="last-update">Cargando datos…</div>
   <div class="update-actions">
@@ -80,7 +80,7 @@
   <p class="subtitle">Estas acciones son destructivas. Antes de borrar audios o espectrogramas, asegúrate de haber hecho copia si los necesitas.</p>
   <div class="actions-grid">
    <div class="action-card"><h3>CSV de métricas</h3><p>Vacía el histórico de sensores y deja la cabecera del CSV para que el monitor pueda seguir escribiendo sin romper la gráfica.</p><button class="btn btn-danger" onclick="confirmAction('clearStats', '/clearStats', '¿Vaciar el CSV de métricas de stats?')">Vaciar métricas</button></div>
-   <div class="action-card"><h3>Spectrogramas</h3><p>Elimina todos los archivos <strong>.png</strong> generados como espectrogramas dentro de la carpeta de grabaciones.</p><button class="btn btn-danger" onclick="confirmAction('clearSpectrograms', '/clearSpectrograms', '¿Eliminar todos los spectrogramas PNG?')">Vaciar spectrogramas</button></div>
+   <div class="action-card"><h3>Espectrogramas</h3><p>Elimina todos los archivos <strong>.png</strong> generados como espectrogramas dentro de la carpeta de grabaciones.</p><button class="btn btn-danger" onclick="confirmAction('clearSpectrograms', '/clearSpectrograms', '¿Eliminar todos los Espectrogramas PNG?')">Vaciar Espectrogramas</button></div>
    <div class="action-card"><h3>Audios WAV</h3><p>Elimina todos los archivos <strong>.wav</strong> de audio dentro de la carpeta de grabaciones.</p><button class="btn btn-danger" onclick="confirmAction('clearAudios', '/clearAudios', '¿Eliminar todos los audios WAV? Esta acción no se puede deshacer.')">Vaciar audios</button></div>
   </div>
   <div class="message" id="action-message"></div>
