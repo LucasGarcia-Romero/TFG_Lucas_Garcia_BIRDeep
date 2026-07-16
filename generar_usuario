@@ -1,1 +1,0 @@
-echo "orangepi:$(echo -n 'orangepi' | sha256sum | awk '{print $1}')" > /data/credentials.txt
