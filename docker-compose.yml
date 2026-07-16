@@ -23,7 +23,7 @@ services:
       - GAIN=5.0
       - DURATION=60
       - IDRECORDER=1
-      - SLEEPDURATION=10
+      - SLEEPDURATION=240
       - GPIO_PIN=117
       - AUDIO_DEVICE=plughw:CARD=Microphone,DEV=0
       - WATCHDOG_MARGIN_SECONDS=600
