@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsox-fmt-alsa \
     alsa-utils \
     ca-certificates \
+    curl \
     bash \
     coreutils \
     procps \

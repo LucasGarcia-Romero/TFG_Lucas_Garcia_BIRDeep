@@ -14,6 +14,7 @@ GPIO_PIN="${GPIO_PIN:-117}"
 AUDIO_DEVICE="${AUDIO_DEVICE:-hw:2,0}"
 SOX_TIMEOUT_MARGIN="${SOX_TIMEOUT_MARGIN:-120}"
 SPECTROGRAM_TIMEOUT="${SPECTROGRAM_TIMEOUT:-300}"
+PROGRAMS_DIR=/home/orangepi
 
 # --- Cargar config externa si existe ---
 CONFIG_FILE="${DATA_DIR}/config.txt"
@@ -88,11 +89,20 @@ while true; do
   timeout --kill-after=10s "${SOX_TIMEOUT}s" \
     sox -t alsa "$AUDIO_DEVICE" -r "$SAMPLE_RATE" -b "$BITRATE" -c 1 "$WAV_PATH" trim 0 "$DURATION"
 
-  write_state LAST_WAV "$WAV_PATH"
-  write_state LAST_WAV_TS "$(date +%s)"
-  write_state LAST_STAGE "spectrogram"
 
-  mkdir -p "$BACKUP_DIR/$DIRECTORY"
+
+  # para envio de datos al servidor de doñana
+  curl --fail-with-body \
+    --show-error \
+    --connect-timeout 15 \
+    --max-time 300 \
+    -F "json_data={\"file_1\": {\"filename\": \"${STATION}${SAFE_FILE}.wav\",\"id_recorder_recordings\": \"${IDRECORDER}\",\"time_record\": \"${FILE_DATE}\",\"filetype_record\": \".wav\",\"bitrate_record\": \"${BITRATE}\",\"sample_rate_record\": \"${SAMPLE_RATE}\",\"gain_record\": \"${GAIN}\",\"duration_record\": \"${DURATION}\"}}" \
+    -F "file_1=@${WAV_PATH};type=audio/wav" \
+    "http://10.0.0.114:5000/api/v1/insert_files"
+
+  # mkdir -p $PROGRAMS_DIR/sdBackup/$DIRECTORY
+  # $PROGRAMS_DIR/spectrogram/spectrogram $PROGRAMS_DIR/recordings/$STATION$SAFE_FILE.wav
+  # mv $PROGRAMS_DIR/recordings/$STATION$SAFE_FILE.wav* $PROGRAMS_DIR/sdBackup/$DIRECTORY/
 
   # Spectrograma. Si falla o se cuelga, el contenedor sale y Docker lo reinicia.
   if [ -x "$SPECTROGRAM_BIN" ]; then
