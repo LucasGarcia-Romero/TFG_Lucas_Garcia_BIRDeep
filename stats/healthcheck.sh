@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+ 
 DATA_DIR="${DATA_DIR:-/data}"
 HISTORY_FILE="${HISTORY_FILE:-$DATA_DIR/sensor_history.csv}"
 MAX_AGE_SECONDS="${STATS_MAX_AGE_SECONDS:-300}"

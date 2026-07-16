@@ -8,5 +8,5 @@ STATS_FILE="$DATA_DIR/stats.txt"
 
 mkdir -p "$RECORDINGS_DIR" "$BACKUP_DIR"
 touch "$STATS_FILE"
-
+ 
 exec /app/record.sh

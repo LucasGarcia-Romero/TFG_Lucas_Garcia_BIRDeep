@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-
+ 
 DATA_DIR="${DATA_DIR:-/data}"
 RECORDINGS_DIR="$DATA_DIR/recordings"
 DURATION="${DURATION:-60}"

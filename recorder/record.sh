@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-
+ 
 # --- ENV desde docker-compose ---
 DATA_DIR="${DATA_DIR:-/data}"
 STATION="${STATION:-TECHOUTAD_}"

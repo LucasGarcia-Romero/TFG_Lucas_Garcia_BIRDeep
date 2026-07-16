@@ -9,7 +9,7 @@ SENSOR_FILE="${DATA_DIR}/sensor_history.csv"
 DHT22_BIN="${DHT22_BIN:-/app/DHT22/dht22.out}"
 
 mkdir -p "$DATA_DIR"
-
+ 
 if [ ! -f "$SENSOR_FILE" ]; then
   echo "timestamp,internal_temp,external_temp,humidity" > "$SENSOR_FILE"
 fi

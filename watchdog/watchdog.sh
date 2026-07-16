@@ -447,7 +447,7 @@ check_container() {
       ;;
   esac
 }
-
+ 
 IFS=',' read -ra RAW_CONTAINERS <<< "$WATCHDOG_CONTAINERS"
 
 CONTAINERS=()
