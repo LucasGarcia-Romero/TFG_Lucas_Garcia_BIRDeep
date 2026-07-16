@@ -1,16 +1,24 @@
-FROM debian:bookworm-slim
+# syntax=docker/dockerfile:1
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Tomamos únicamente el cliente Docker y sus plugins oficiales.
+FROM docker:cli AS docker_cli
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+FROM alpine:3.24
+
+RUN apk add --no-cache \
     bash \
     ca-certificates \
-    docker.io \
     coreutils \
     findutils \
     gawk \
-    procps \
-    && rm -rf /var/lib/apt/lists/*
+    procps
+
+# No copiamos dockerd, containerd ni runc: el watchdog usa el socket del host.
+COPY --from=docker_cli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=docker_cli /usr/local/libexec/docker/cli-plugins/ /usr/local/libexec/docker/cli-plugins/
+
+# Conserva compatibilidad tanto con "docker compose" como con "docker-compose".
+RUN ln -sf /usr/local/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
 
 COPY watchdog/watchdog.sh /usr/local/bin/recorder-watchdog
 RUN chmod +x /usr/local/bin/recorder-watchdog
